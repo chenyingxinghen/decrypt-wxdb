@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' http: https: data:; style-src 'self' 'unsafe-inline'; script-src 'self';" />
+  <title>微忆 WeMemo</title>
+  <link rel="stylesheet" href="css/app.css" />
+  <link rel="stylesheet" href="css/app.themes.css" />
+  <script src="js/theme.js"></script>
+</head>
+<body>
+  <!-- 启动遮罩 -->
+  <div class="boot" id="boot">
+    <div class="logo" id="bootLogo"></div>
+    <div class="title">微忆 WeMemo</div>
+    <div class="sub" id="bootSub">正在加载你的聊天记忆…</div>
+    <div class="spinner" id="bootSpin"></div>
+    <div class="bar-wrap" id="bootBarWrap" style="display:none"><div class="bar" id="bootBar"></div></div>
+    <div class="err" id="bootErr" style="display:none"></div>
+    <button class="retry" id="bootRetry" style="display:none">重试</button>
+  </div>
+
+  <!-- 顶栏 -->
+  <div class="titlebar">
+    <div class="brand" id="brandMark"></div>
+    <div class="win-ctrls">
+      <div class="btn" id="btnMin" title="最小化"><svg viewBox="0 0 12 12" width="12" height="12"><path d="M1 6h10" stroke="currentColor" stroke-width="1.2"/></svg></div>
+      <div class="btn" id="btnMax" title="最大化"><svg viewBox="0 0 12 12" width="12" height="12"><rect x="1.5" y="1.5" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></div>
+      <div class="btn close" id="btnClose" title="关闭"><svg viewBox="0 0 12 12" width="12" height="12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+    </div>
+  </div>
+
+  <div class="app">
+    <!-- 左侧 tab -->
+    <div class="tabbar" id="tabbar"></div>
+
+    <!-- 会话侧栏 -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <div class="avatar" id="selfAvatar">忆</div>
+        <div class="search-box">
+          <span id="searchIcon"></span>
+          <input id="searchInput" placeholder="搜索" />
+        </div>
+      </div>
+      <div class="sidebar-title" id="listTitle">最近会话</div>
+      <div class="session-list" id="sessionList"></div>
+    </div>
+
+    <!-- 聊天区 -->
+    <div class="chat" id="chat">
+      <div class="chat-head" id="chatHead">
+        <div class="name" id="chatName">微忆</div>
+        <div class="meta" id="chatMeta"></div>
+        <div class="head-actions" id="headActions" style="display:none">
+          <div class="head-btn" id="btnFindInChat" title="在本会话中查找（Ctrl+F）">
+            <svg viewBox="0 0 20 20" width="16" height="16"><circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M13 13l4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span>查找</span>
+          </div>
+          <div class="head-btn" id="btnLoadAll" title="加载全部消息">
+            <svg viewBox="0 0 20 20" width="16" height="16"><path d="M10 3v10M6 9l4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span>全部</span>
+          </div>
+          <div class="head-btn" id="btnExport" title="导出本会话聊天记录">
+            <svg viewBox="0 0 20 20" width="16" height="16"><path d="M10 13V3M6 7l4-4 4 4M3 15v2h14v-2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span>导出</span>
+          </div>
+        </div>
+      </div>
+      <!-- 会话内查找条（Ctrl+F 或头部「查找」按钮唤出） -->
+      <div class="find-bar" id="findBar" style="display:none">
+        <span class="find-icon">
+          <svg viewBox="0 0 20 20" width="14" height="14"><circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M13 13l4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </span>
+        <input id="findInput" placeholder="在本会话中查找" />
+        <span class="find-count" id="findCount"></span>
+        <span class="find-nav" id="findPrev" title="上一条（Shift+Enter）">‹</span>
+        <span class="find-nav" id="findNext" title="下一条（Enter）">›</span>
+        <span class="find-close" id="findClose" title="关闭（Esc）">×</span>
+      </div>
+      <div class="chat-body" id="chatBody">
+        <div class="chat-empty" id="chatEmpty">
+          <span id="emptyIcon"></span>
+          <div>选择一个会话，回温你的聊天记忆</div>
+        </div>
+        <div class="btn-to-bottom" id="btnToBottom" style="display:none" title="回到最新">↓</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 导出对话框 -->
+  <div class="modal" id="exportModal" style="display:none">
+    <div class="modal-card">
+      <div class="modal-title" id="exportTitle">导出聊天记录</div>
+      <div class="modal-sub" id="exportSub"></div>
+      <div class="modal-field">
+        <div class="modal-label">格式</div>
+        <div class="seg" id="exportFmt">
+          <div class="seg-item active" data-fmt="html">网页 HTML<span>含图片，排版如界面</span></div>
+          <div class="seg-item" data-fmt="txt">文本 TXT<span>纯文字，体积最小</span></div>
+          <div class="seg-item" data-fmt="json">数据 JSON<span>结构化，便于二次处理</span></div>
+        </div>
+      </div>
+      <div class="modal-field" id="exportScopeField">
+        <div class="modal-label">范围</div>
+        <div class="seg" id="exportScope">
+          <div class="seg-item active" data-scope="one">当前会话</div>
+          <div class="seg-item" data-scope="all">全部会话<span>逐个文件，耗时较长</span></div>
+        </div>
+      </div>
+      <div class="modal-progress" id="exportProgress" style="display:none">
+        <div class="modal-progress-text" id="exportProgressText">准备导出…</div>
+        <div class="bar-wrap"><div class="bar" id="exportBar"></div></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="exportCancel">取消</button>
+        <button class="btn-primary" id="exportGo">选择目录并导出</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/icons.js"></script>
+  <script src="js/emoticons.js"></script>
+  <script src="js/wxgf.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

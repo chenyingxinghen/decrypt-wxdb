@@ -1,0 +1,26 @@
+{
+  "name": "wememo",
+  "productName": "微忆 WeMemo",
+  "version": "1.0.0",
+  "description": "微信记忆离线归档 — 一键解密并浏览你自己的微信聊天记录",
+  "main": "src/main/loader.js",
+  "author": "wememo",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "dev": "electron . --dev",
+    "vendor:python": "node tools/fetch_python.js",
+    "test:python": "node tools/test_bundled_python.js",
+    "test": "node tests/run_all.js",
+    "build": "node build.js",
+    "pack": "node build.js && electron-builder --win portable --config electron-builder.yml",
+    "start": "electron dist/",
+    "start:debug": "cross-env WEMEMO_DEBUG=1 electron dist/ --enable-logging",
+    "start:dev": "electron ."
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^31.0.0",
+    "electron-builder": "^26.15.3"
+  }
+}

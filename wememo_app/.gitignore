@@ -1,0 +1,22 @@
+# 依赖与构建产物
+node_modules/
+dist/
+
+# 自带 Python 运行时（由 `npm run vendor:python` 生成，约 34 MB，不入库）
+runtime/
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 临时/探针文件
+_probe_*
+engine/_bench_tmp/
+engine/_verify_tmp/
+
+# 许可证密钥（私钥绝不入库）与签发产物
+keys/
+license.dat
+
+# 打包产物
+release/

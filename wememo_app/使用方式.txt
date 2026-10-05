@@ -1,0 +1,7 @@
+使用方式
+
+# 一键构建 + 打包
+npm run pack          # → release/WeMemo-1.0.0-portable.exe
+
+# 只签发许可证（不重构建）
+node tools/issue_license.js --customer "客户" --days 365 --out license.dat

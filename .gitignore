@@ -1,27 +1,26 @@
-# ---- 生成产物（截图/中间文件，约 1.5G）----
+# ============================================================
+#  仓库分层策略（2026-10-05）
+#
+#  设计目标：仓库只承载「文档 + 前端外壳」，
+#  密钥材料、解密引擎、逆向脚本一律不入库。
+#
+#  改动前请用 git add -n 确认拟入库文件中
+#  不含任何 64 位 hex 密钥与 engine/ 路径。
+# ============================================================
+
+# ---- 截图 / 中间交付物 ----
 deliverables/
 
-# ---- 嵌套独立项目 wememo_app（含 node_modules/dist/release/keys，约 1.2G）----
-wememo_app/
+# ---- 本地笔记 ----
+.workbuddy/
 
-# ---- 敏感密钥与数据库文件（绝不入库）----
-key_info.plain
-weflow_key.txt
-aes_keys_startup.txt
-keyinfo_backup/
-06_inject/master_key.txt
+# ---- 系统 / 编辑器 ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
 
-# ---- 归档中的密钥材料与数据库文件 ----
-archive/all_keys.txt
-archive/captured_keys.txt
-archive/key.txt
-archive/latest_keyinfo.json
-archive/derived_keys.json
-archive/session_plain.db
-archive/*.db-shm
-archive/*.db-wal
-
-# ---- Python ----
+# ---- Python 通用 ----
 __pycache__/
 *.pyc
 *.pyo
@@ -29,13 +28,62 @@ __pycache__/
 .venv/
 venv/
 
-# ---- 系统/编辑器 ----
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
+# ============================================================
+#  wememo_app：只推前端外壳，解密引擎整体排除
+# ============================================================
 
-# Local notes and sensitive research material
-.workbuddy/
-archive/
+# 引擎侧全部内容（decryptor/keyextract/wcdb/imgdecrypt/pyaes_fallback，
+# 以及 _verify_tmp/_bench_tmp 下 608MB 解密明文 .db）
+wememo_app/engine/
 
+# 构建产物与工具链（约 1.8G）
+wememo_app/node_modules/
+wememo_app/.toolchain/
+wememo_app/release/
+wememo_app/runtime/
+wememo_app/dist/
+wememo_app/out/
+wememo_app/build/
+wememo_app/.venv/
+wememo_app/__pycache__/
+
+# ============================================================
+#  archive/：只推文档
+#  逆向脚本与密钥材料整体排除。
+#  （原「archive/ 整目录屏蔽」已废除——它反而让密钥文件
+#    连被单独排除的机会都没有，改为按类型精确屏蔽）
+# ============================================================
+
+# 全部 Python 逆向脚本（含硬编码主密钥 61 处）
+archive/**/*.py
+
+# WeFlow 官方打包产物（第三方代码，仅作逆向参考）
+# 虽无密钥命中，但属他方产物，本仓库只保留我方文档
+archive/weflow_extract/
+
+# 签名特征库之外的二进制归档
+*.tgz
+
+# 密钥与凭据材料（按 basename 匹配，覆盖任意层级）
+master_key.txt
+all_keys.txt
+captured_keys.txt
+key.txt
+*_keys.txt
+latest_keyinfo.json
+derived_keys.json
+key_info.plain
+weflow_key.txt
+aes_keys_startup.txt
+
+# 数据库与解密产物
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.plain
+keyinfo_backup/
+
+# 根目录遗留的密钥文件
+06_inject/master_key.txt

@@ -1,0 +1,1076 @@
+/* ===== WeMemo 微忆 — 主题引擎 (app.themes.css) =====
+ * 浅色默认在 app.css；本文件承载所有非浅色主题 + 主题管理器 UI。
+ * 结构 / 布局 / 交互逻辑均不动。激活 / 切换 / 预览 / 壁纸见 js/theme.js。
+ *
+ * 艺术效果（全开）：玻璃面板 / 渐变气泡 / 头像光环 / 选中态流光 /
+ *   卡片悬浮微动 / 图表渐变 / 按钮与启动 logo 渐变辉光 / 每套独有背景氛围 /
+ *   组件皮肤（圆角·字体·栅格·玻璃强度随主题变化）/ 壁纸引擎（用户图片或渐变做背景）。
+ *
+ * ---------------------------------------------------------------------------
+ * 选择器去重约定（Task B，重要）
+ * ---------------------------------------------------------------------------
+ * 「非浅色家族」统一写作：
+ *     :root[data-theme]:where(:not([data-theme="light"]))
+ * 用 :where() 包裹排除条件是刻意选择——:where() 特异性恒为 0，因此该写法与改造前
+ * 「逐个枚举 7 个 id」的特异性完全相同（均为 0,2,0 + 后代选择器），既消除了新增主题
+ * 漏加的风险，又不会因特异性抬升而翻转既有层叠关系（例如第 2 节 .col-bar 的平色被
+ * 第 3 节渐变覆盖这一既有行为得以原样保留）。若改用裸 :not()，特异性会升到 0,4,0
+ * 并意外反超第 3 节，造成图表柱状条视觉回归。
+ * ========================================================= */
+
+/* =========================================================
+ * 0. 共享默认（Task A 登记的叠加层 / 形状 token）
+ *    必须位于全部主题块之前：本块与 :root[data-theme="id"] 特异性相同（0,2,0），
+ *    靠源码顺序让具体主题得以覆盖。
+ *    深色家族默认值 === 改造前 DARK 组里的硬编码字面量，保证既有深色主题逐像素一致。
+ * ========================================================= */
+:root[data-theme] {
+  --wx-overlay:        rgba(255,255,255,.06);  /* 我方富卡片底 */
+  --wx-overlay-weak:   rgba(255,255,255,.05);  /* 图片占位块 / 链接缩略图 */
+  --wx-overlay-strong: rgba(255,255,255,.08);  /* 表情退化标签 / 群标签 */
+  --wx-overlay-heavy:  rgba(255,255,255,.1);   /* 我方表情退化标签 */
+  --wx-scroll:         rgba(255,255,255,.14);  /* 滚动条滑块 */
+  --wx-scroll-hover:   rgba(255,255,255,.24);
+  --wx-select:         rgba(255,255,255,.16);  /* 文本选区 */
+  --wx-radius:         10px;                   /* 基础圆角，由第 5 节 skin 消费 */
+}
+
+/* =========================================================
+ * 1. 各主题 token + 艺术效果变量
+ *    --wx-aura        body 背景氛围图层（伪元素，不新增 DOM）
+ *    --wx-glass-bg    面板玻璃底色        --wx-glass-blur  模糊半径
+ *    --wx-glow        强调色辉光          --wx-bubble-*    气泡渐变/文字/尾
+ *    --wx-ava-ring    头像光环色
+ * ========================================================= */
+
+/* —— 霓虹终端：等宽字体 + 锐利直角 + 高对比绿（组件外观主题）—— */
+:root[data-theme="terminal"] {
+  --wx-bg:#0B0F0C; --wx-panel:#0E1410; --wx-sidebar:#0A0F0C; --wx-line:#1A2A1E; --wx-line-strong:#243A2A;
+  --wx-text:#D7FFE6; --wx-text-2:#7FCB97; --wx-text-3:#4F8C66;
+  --wx-green:#39FF8B; --wx-green-deep:#1FCB63; --wx-blue:#5BE0C8;
+  --wx-hover:#102116; --wx-active:#142B1C; --wx-red:#FF6B6B; --wx-white:#0E1410;
+  --wx-bubble-me:#0E3B22; --wx-bubble-you:#102116; --wx-avatar:#143022;
+  --wx-shadow:0 0 0 1px #1FCB63, 0 0 18px -6px rgba(57,255,139,.4);
+  --wx-surface:#0F1812; --wx-track:#132016; --wx-chipbg:rgba(57,255,139,.1);
+  --wx-glass:rgba(57,255,139,.04); --wx-glass2:rgba(57,255,139,.03); --wx-glass-line:rgba(57,255,139,.18);
+  --wx-hi:rgba(57,255,139,.07); --wx-hi2:rgba(57,255,139,.12);
+  --wx-glow:rgba(57,255,139,.4); --wx-glow-soft:rgba(57,255,139,.2);
+  --wx-aura: linear-gradient(135deg, #06120B, #0A1A10);
+  --wx-glass-blur:0px;
+  --wx-bubble-me-grad:linear-gradient(135deg,#39FF8B,#1FCB63); --wx-bubble-me-tail:#1FCB63; --wx-bubble-me-text:#04140A;
+  --wx-bubble-you-bg:rgba(57,255,139,.06); --wx-bubble-you-tail:rgba(57,255,139,.06); --wx-bubble-you-text:#CFF8DE;
+  --wx-ava-ring:rgba(57,255,139,.6);
+}
+
+/* —— 液态玻璃：大圆角 + 重玻璃柔光（组件外观主题）—— */
+:root[data-theme="liquid"] {
+  --wx-bg:#0C0F14; --wx-panel:#12161D; --wx-sidebar:#0E121A; --wx-line:#28323E; --wx-line-strong:#33404E;
+  --wx-text:#EAF1F8; --wx-text-2:#9DB0C4; --wx-text-3:#6A7C90;
+  --wx-green:#7CC4FF; --wx-green-deep:#4FA3E8; --wx-blue:#7CC4FF;
+  --wx-hover:#1A212B; --wx-active:#202A36; --wx-red:#FA6A6A; --wx-white:#12161D;
+  --wx-bubble-me:#274A6B; --wx-bubble-you:#1C2630; --wx-avatar:#243140;
+  --wx-shadow:0 10px 34px -12px rgba(124,196,255,.4);
+  --wx-surface:#18212B; --wx-track:#1E2733; --wx-chipbg:rgba(124,196,255,.1);
+  --wx-glass:rgba(255,255,255,.07); --wx-glass2:rgba(255,255,255,.05); --wx-glass-line:rgba(160,200,255,.14);
+  --wx-hi:rgba(160,200,255,.06); --wx-hi2:rgba(160,200,255,.1);
+  --wx-glow:rgba(124,196,255,.4); --wx-glow-soft:rgba(124,196,255,.2);
+  --wx-aura: radial-gradient(1100px 760px at 18% -6%, rgba(124,196,255,.14), transparent 55%),
+             radial-gradient(900px 700px at 92% 102%, rgba(127,90,255,.10), transparent 60%), var(--wx-bg);
+  --wx-glass-bg:rgba(255,255,255,.06); --wx-glass-blur:28px;
+  --wx-bubble-me-grad:linear-gradient(135deg,#7CC4FF,#4FA3E8); --wx-bubble-me-tail:#4FA3E8; --wx-bubble-me-text:#04131F;
+  --wx-bubble-you-bg:rgba(255,255,255,.06); --wx-bubble-you-tail:rgba(255,255,255,.06); --wx-bubble-you-text:#DCE7F2;
+  --wx-ava-ring:rgba(124,196,255,.6);
+}
+
+/* —— 微信浅色：默认风格的轻量增强（不玻璃、不氛围，仅材质与渐变）—— */
+:root[data-theme="light"] {
+  --wx-glow:rgba(7,193,96,.26); --wx-glow-soft:rgba(7,193,96,.12);
+  --wx-aura:none; --wx-glass-blur:0px;
+  --wx-bubble-me-grad:linear-gradient(135deg,#95EC69,#7AD455); --wx-bubble-me-tail:#7AD455; --wx-bubble-me-text:#1A3A12;
+  --wx-bubble-you-bg:#FFFFFF; --wx-bubble-you-tail:#FFFFFF; --wx-bubble-you-text:#1A1A1A;
+  --wx-ava-ring:rgba(7,193,96,.4);
+  --wx-glass-line:#E5E5E5;
+}
+
+/* ---------------------------------------------------------
+ * 1.9 §8 四套风格化主题（Task E）
+ *   赛博霓虹 = 技术字 + 辉光 + 扫描线
+ *   甜系可爱 = 浅色渐变 + 大圆角
+ *   玻璃拟态 = 彩色渐变底 + 重玻璃
+ *   国潮复古 = 衬线字 + 金描边 + 朱红
+ * 全部属 Aura 家族：cyber/glass 深色兜底，kawaii/guochao 浅色兜底。
+ * 浅色两套必须覆盖第 0 节的叠加 token（白→黑），否则占位块/滚动条/选区在浅底上隐形。
+ * --------------------------------------------------------- */
+
+/* —— 赛博霓虹：深空蓝紫底 + 青/品红霓虹 + 等宽科技字 + 微扫描线 —— */
+:root[data-theme="cyber"] {
+  --wx-bg:#0A0E1F; --wx-panel:#0F1626; --wx-sidebar:#0B1020; --wx-line:#1B2540; --wx-line-strong:#25325A;
+  --wx-text:#E6F7FF; --wx-text-2:#9FC7E8; --wx-text-3:#5E7DA8;
+  --wx-green:#00E5FF; --wx-green-deep:#00A3C4; --wx-blue:#FF2BD6;
+  --wx-hover:#14203A; --wx-active:#1A2A4A; --wx-red:#FF5C7A; --wx-white:#0F1626;
+  --wx-bubble-me:#0E3A5A; --wx-bubble-you:#111B33; --wx-avatar:#16223E;
+  --wx-shadow:0 0 18px -6px rgba(0,229,255,.5);
+  --wx-surface:#121A30; --wx-track:#16223E; --wx-chipbg:rgba(0,229,255,.12);
+  --wx-glass:rgba(0,229,255,.05); --wx-glass2:rgba(0,229,255,.04); --wx-glass-line:rgba(0,229,255,.22);
+  --wx-hi:rgba(0,229,255,.07); --wx-hi2:rgba(0,229,255,.12);
+  --wx-glow:rgba(0,229,255,.55); --wx-glow-soft:rgba(0,229,255,.26);
+  --wx-aura: radial-gradient(900px 620px at 14% 4%, rgba(0,229,255,.22), transparent 58%),
+             radial-gradient(820px 560px at 90% 96%, rgba(255,43,214,.18), transparent 60%),
+             radial-gradient(1000px 700px at 50% 50%, rgba(20,11,46,.5), transparent 70%), var(--wx-bg);
+  --wx-glass-bg:rgba(10,20,40,.5); --wx-glass-blur:14px;
+  --wx-bubble-me-grad:linear-gradient(135deg,#00E5FF,#FF2BD6); --wx-bubble-me-tail:#00A3C4; --wx-bubble-me-text:#03121A;
+  --wx-bubble-you-bg:rgba(0,229,255,.06); --wx-bubble-you-tail:rgba(0,229,255,.06); --wx-bubble-you-text:#CDEBFF;
+  --wx-ava-ring:rgba(0,229,255,.6);
+  --wx-font:"Share Tech Mono",ui-monospace,SFMono-Regular,Consolas,monospace; --wx-radius:4px;
+  /* 深色家族：叠加 token 沿用第 0 节默认，但青调更贴合 */
+  --wx-overlay:rgba(0,229,255,.07); --wx-overlay-weak:rgba(0,229,255,.05);
+  --wx-overlay-strong:rgba(0,229,255,.1); --wx-overlay-heavy:rgba(0,229,255,.14);
+  --wx-scroll:rgba(0,229,255,.22); --wx-scroll-hover:rgba(0,229,255,.36);
+  --wx-select:rgba(0,229,255,.24);
+}
+
+/* —— 甜系可爱：粉→薰衣草渐变底 + 奶白胶囊卡 + 柔粉投影 + 大圆角 —— */
+:root[data-theme="kawaii"] {
+  --wx-bg:#FFE3F4; --wx-panel:#FFF6FB; --wx-sidebar:#FFEAF6; --wx-line:#FFD0E8; --wx-line-strong:#F7B8D8;
+  --wx-text:#6B3A5B; --wx-text-2:#B07BA0; --wx-text-3:#D7A9C8;
+  --wx-green:#FF5FA2; --wx-green-deep:#E84C8E; --wx-blue:#B98BE0;
+  --wx-hover:#FFE0F0; --wx-active:#FFD0E8; --wx-red:#FF8AAE; --wx-white:#FFFFFF;
+  --wx-bubble-me:#FFC2DE; --wx-bubble-you:#FFFFFF; --wx-avatar:#FFD6EC;
+  --wx-shadow:0 4px 14px -4px rgba(255,95,162,.28);
+  --wx-surface:#FFF0F8; --wx-track:#FFE0F0; --wx-chipbg:rgba(255,95,162,.14);
+  --wx-glass:rgba(255,255,255,.5); --wx-glass2:rgba(255,255,255,.4); --wx-glass-line:rgba(255,95,162,.3);
+  --wx-hi:rgba(255,95,162,.08); --wx-hi2:rgba(255,95,162,.14);
+  --wx-glow:rgba(255,95,162,.32); --wx-glow-soft:rgba(255,95,162,.15);
+  --wx-aura: radial-gradient(1000px 720px at 18% 6%, rgba(255,193,230,.9), transparent 58%),
+             radial-gradient(900px 700px at 92% 96%, rgba(185,139,224,.85), transparent 60%),
+             linear-gradient(135deg,#FFE3F4,#E8E1FF);
+  --wx-glass-bg:rgba(255,255,255,.55); --wx-glass-blur:12px;
+  --wx-bubble-me-grad:linear-gradient(135deg,#FFC2DE,#FF9ECB); --wx-bubble-me-tail:#FF9ECB; --wx-bubble-me-text:#5A2440;
+  --wx-bubble-you-bg:#FFFFFF; --wx-bubble-you-tail:#FFFFFF; --wx-bubble-you-text:#6B3A5B;
+  --wx-ava-ring:rgba(255,95,162,.5);
+  --wx-radius:22px;
+  /* 浅色家族：叠加层必须翻成深色，否则在粉白底上完全隐形 */
+  --wx-overlay:rgba(107,58,91,.06); --wx-overlay-weak:rgba(107,58,91,.05);
+  --wx-overlay-strong:rgba(107,58,91,.06); --wx-overlay-heavy:rgba(107,58,91,.09);
+  --wx-scroll:rgba(255,95,162,.34); --wx-scroll-hover:rgba(255,95,162,.55);
+  --wx-select:rgba(255,95,162,.25);
+}
+
+/* —— 玻璃拟态 v5（暗色）：雨窗街灯夜景壁纸 + 深色磨砂玻璃 + 白字
+   可读性策略：深色玻璃承载白字，夜景亮区（街灯/霓虹）被玻璃糊开压暗，
+   白字对比度稳定 ≥ 7:1（WCAG AAA）。属深色 Aura 家族。 */
+:root[data-theme="glass"] {
+  --wx-bg:#10131F; --wx-panel:rgba(18,22,42,.66); --wx-sidebar:rgba(15,19,36,.6); --wx-line:rgba(255,255,255,.14); --wx-line-strong:rgba(255,255,255,.22);
+  --wx-text:#FFFFFF; --wx-text-2:#D4DBF2; --wx-text-3:#96A1C4;
+  --wx-green:#7FA8FF; --wx-green-deep:#5A7FE8; --wx-blue:#A98BFF;
+  --wx-hover:rgba(255,255,255,.07); --wx-active:rgba(255,255,255,.12); --wx-red:#FF9DB0; --wx-white:rgba(22,27,52,.7);
+  --wx-bubble-me:rgba(255,255,255,.28); --wx-bubble-you:rgba(255,255,255,.16); --wx-avatar:rgba(90,110,180,.4);
+  --wx-shadow:0 8px 30px -10px rgba(0,0,0,.5);
+  --wx-surface:rgba(12,16,34,.7); --wx-track:rgba(255,255,255,.1); --wx-chipbg:rgba(127,168,255,.14);
+  --wx-glass:rgba(24,30,60,.55); --wx-glass2:rgba(20,25,52,.5); --wx-glass-line:rgba(255,255,255,.22);
+  --wx-hi:rgba(255,255,255,.06); --wx-hi2:rgba(255,255,255,.1);
+  --wx-glow:rgba(127,168,255,.45); --wx-glow-soft:rgba(127,168,255,.22);
+  /* 背景 = 雨窗街灯夜景图 + 顶部街灯暖光 + 底部冷光 + 深蓝压暗层（亮区不撞白字） */
+  --wx-aura: url("../assets/themes/glass-bg.jpg") center/cover no-repeat,
+             radial-gradient(1100px 760px at 82% 12%, rgba(255,200,120,.22), transparent 55%),
+             radial-gradient(1000px 700px at 8% 100%, rgba(90,120,220,.28), transparent 58%),
+             linear-gradient(180deg, rgba(8,10,24,.32), rgba(8,10,24,.2) 45%, rgba(10,12,28,.4)),
+             linear-gradient(135deg,#10131F,#1A1A38 55%,#241A3A);
+  --wx-glass-bg:rgba(14,17,36,.62); --wx-glass-blur:14px; /* 夜景街灯经玻璃糊开，仍保留光斑层次 */
+  --wx-bubble-me-grad:linear-gradient(135deg,#5A7FE8,#7A5CFF); --wx-bubble-me-tail:#5A6EF0; --wx-bubble-me-text:#FFFFFF;
+  --wx-bubble-you-bg:rgba(22,28,56,.6); --wx-bubble-you-tail:rgba(22,28,56,.6); --wx-bubble-you-text:#E6EAFF;
+  --wx-ava-ring:rgba(255,255,255,.35);
+  --wx-radius:16px;
+  /* 深色家族：白叠加（强度克制，对比度优先） */
+  --wx-overlay:rgba(255,255,255,.08); --wx-overlay-weak:rgba(255,255,255,.06);
+  --wx-overlay-strong:rgba(255,255,255,.12); --wx-overlay-heavy:rgba(255,255,255,.16);
+  --wx-scroll:rgba(255,255,255,.28); --wx-scroll-hover:rgba(255,255,255,.44);
+  --wx-select:rgba(255,255,255,.22);
+}
+
+/* —— 国潮复古：宣纸米色底 + 金描边 + 朱红强调 + 衬线字 —— */
+:root[data-theme="guochao"] {
+  --wx-bg:#EAE0C4; --wx-panel:#FBF5E9; --wx-sidebar:#F5ECDA; --wx-line:#E2D6BC; --wx-line-strong:#D6C7A6;
+  --wx-text:#2B2620; --wx-text-2:#6E5E45; --wx-text-3:#9A8A6E;
+  --wx-green:#C8102E; --wx-green-deep:#9E0C24; --wx-blue:#C99E27;
+  --wx-hover:#EFE6D2; --wx-active:#E7DCC2; --wx-red:#C8102E; --wx-white:#FBF5E9;
+  --wx-bubble-me:#C8102E; --wx-bubble-you:#FBF5E9; --wx-avatar:#E7D9BC;
+  --wx-shadow:0 2px 10px rgba(43,38,32,.18);
+  --wx-surface:#F3EAD6; --wx-track:#E7DCC2; --wx-chipbg:rgba(201,158,39,.16);
+  --wx-glass:rgba(255,255,255,.4); --wx-glass2:rgba(255,255,255,.3); --wx-glass-line:rgba(201,158,39,.4);
+  --wx-hi:rgba(201,158,39,.1); --wx-hi2:rgba(201,158,39,.16);
+  --wx-glow:rgba(200,16,46,.3); --wx-glow-soft:rgba(200,16,46,.14);
+  --wx-aura: radial-gradient(circle at 30% 18%, #F7EFDD, #EAE0C4 70%);
+  --wx-glass-bg:rgba(251,245,233,.7); --wx-glass-blur:10px;
+  --wx-bubble-me-grad:linear-gradient(135deg,#C8102E,#9E0C24); --wx-bubble-me-tail:#9E0C24; --wx-bubble-me-text:#FBF5E9;
+  --wx-bubble-you-bg:#FBF5E9; --wx-bubble-you-tail:#FBF5E9; --wx-bubble-you-text:#2B2620;
+  --wx-ava-ring:rgba(201,158,39,.6);
+  --wx-font:"Noto Serif SC","Source Han Serif SC","Songti SC",SimSun,serif; --wx-radius:10px;
+  /* 浅色家族：叠加层翻深（墨色），滚动条/选区走朱红金调 */
+  --wx-overlay:rgba(43,38,32,.06); --wx-overlay-weak:rgba(43,38,32,.05);
+  --wx-overlay-strong:rgba(43,38,32,.06); --wx-overlay-heavy:rgba(43,38,32,.09);
+  --wx-scroll:rgba(158,12,36,.3); --wx-scroll-hover:rgba(158,12,36,.5);
+  --wx-select:rgba(200,16,46,.2);
+}
+
+/* =========================================================
+ * 2. 共享深色修正（非浅色家族通用）
+ *    把 app.css 写死的浅色背景改成 token 驱动，避免暗底发白/发灰；
+ *    叠加层改用 --wx-overlay* / --wx-scroll* / --wx-select（Task A 登记），
+ *    使浅色 Aura 家族（kawaii/guochao）只需覆盖 token 即自动正确。
+ * ========================================================= */
+
+/* 自头像：以品牌图标（记忆冲破束缚）替换"忆"字。
+   纯外观替换：文字透明仍占位会导致图标偏移，故用绝对定位 + inset 0 + margin:auto 完美居中，
+   文字（透明）不再参与 flex 布局。不改 index.html/app.js。 */
+.sidebar-top .avatar { color: transparent; position: relative; }
+.sidebar-top .avatar::before {
+  content: ''; position: absolute; inset: 0; margin: auto;
+  width: 20px; height: 20px;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3.6C7.3 3.6 3.5 7.1 3.5 11.4c0 2.4 1.3 4.6 3.4 6-.3 1.7-1.4 3.2-3 4.5 2.6-.2 4.6-1.2 6-2.7.6.1 1.2.2 1.9.2 4.7 0 8.5-3.5 8.5-7.8s-3.8-7.8-8.5-7.8z'/><path d='M15.9 4.7l1.2 2.9 2.9 1.2-2.9 1.2-1.2 2.9-1.2-2.9-2.9-1.2 2.9-1.2z'/><path d='M20.9 2.4l.75 1.8 1.8.75-1.8.75-.75 1.8-.75-1.8-1.8-.75 1.8-.75z'/><circle cx='18.8' cy='19.6' r='0.9' fill='white' stroke='none'/></svg>") center/contain no-repeat;
+}
+:root[data-theme]:where(:not([data-theme="light"])) .search-box input,
+:root[data-theme]:where(:not([data-theme="light"])) .find-bar input {
+  background: var(--wx-surface); color: var(--wx-text);
+}
+
+:root[data-theme]:where(:not([data-theme="light"])) .bar-track,
+:root[data-theme]:where(:not([data-theme="light"])) .ratio,
+:root[data-theme]:where(:not([data-theme="light"])) .rank-track,
+:root[data-theme]:where(:not([data-theme="light"])) .rank-tag { background: var(--wx-track); }
+
+/* 注：下一条 .col-bar 平色在源码顺序上被第 3 节的渐变覆盖（特异性相同、后者靠后），
+   这是改造前的既有行为，此处原样保留以确保图表柱状条视觉零变化。 */
+:root[data-theme]:where(:not([data-theme="light"])) .col-bar { background: var(--wx-track); }
+:root[data-theme]:where(:not([data-theme="light"])) .col:hover .col-bar { background: var(--wx-green); }
+:root[data-theme]:where(:not([data-theme="light"])) .ratio-sent { background: var(--wx-green); }
+:root[data-theme]:where(:not([data-theme="light"])) .ratio-legend .dot.sent { background: var(--wx-green); }
+:root[data-theme]:where(:not([data-theme="light"])) .ratio-legend .dot.recv { background: var(--wx-track); }
+
+/* 我的消息富卡片：原亮绿在暗底刺眼 → 中性叠加 */
+:root[data-theme]:where(:not([data-theme="light"])) .msg.me .file-card,
+:root[data-theme]:where(:not([data-theme="light"])) .msg.me .link-card,
+:root[data-theme]:where(:not([data-theme="light"])) .msg.me .mp-card,
+:root[data-theme]:where(:not([data-theme="light"])) .msg.me .ch-card,
+:root[data-theme]:where(:not([data-theme="light"])) .msg.me .fwd-card,
+:root[data-theme]:where(:not([data-theme="light"])) .msg.me .loc-card,
+:root[data-theme]:where(:not([data-theme="light"])) .msg.me .contact-card { background: var(--wx-overlay); }
+
+/* 特殊消息文字对比度统一（引用 / 链接 / 系统 / 卡片描述）：
+   正文气泡为 var(--wx-text)，而引用/系统/卡片描述走 text-2/text-3 灰阶，
+   暗色主题下小字号灰字对比不足（尤其 mecha 暗色 text-3 #7D7664）——
+   统一提亮：引用与系统文字提至正文色，卡片描述提至 text-2。 */
+:root[data-theme]:where(:not([data-theme="light"])) .quote-card .quote-ref,
+:root[data-theme]:where(:not([data-theme="light"])) .quote-card .quote-ref svg,
+:root[data-theme]:where(:not([data-theme="light"])) .msg.system .bubble { color: var(--wx-text); opacity: .94; }
+:root[data-theme]:where(:not([data-theme="light"])) .link-card .link-des,
+:root[data-theme]:where(:not([data-theme="light"])) .link-card .link-src,
+:root[data-theme]:where(:not([data-theme="light"])) .file-card .file-sub,
+:root[data-theme]:where(:not([data-theme="light"])) .loc-card .loc-sub,
+:root[data-theme]:where(:not([data-theme="light"])) .mp-card .mp-app,
+:root[data-theme]:where(:not([data-theme="light"])) .ch-card .ch-author,
+:root[data-theme]:where(:not([data-theme="light"])) .fwd-card .fwd-sub,
+:root[data-theme]:where(:not([data-theme="light"])) .contact-card .contact-sub { color: var(--wx-text-2); }
+
+:root[data-theme]:where(:not([data-theme="light"])) .img-ph,
+:root[data-theme]:where(:not([data-theme="light"])) .link-card .link-thumb { background: var(--wx-overlay-weak); }
+
+/* 微信表情退化标签 */
+:root[data-theme]:where(:not([data-theme="light"])) .wx-emo.none { background: var(--wx-overlay-strong); color: var(--wx-text-2); }
+:root[data-theme]:where(:not([data-theme="light"])) .msg.me .wx-emo.none { background: var(--wx-overlay-heavy); color: var(--wx-green); }
+
+/* 绿色语义标签 / chip / seg 选中态 */
+:root[data-theme]:where(:not([data-theme="light"])) .tag.group { color: var(--wx-green); background: var(--wx-overlay-strong); }
+:root[data-theme]:where(:not([data-theme="light"])) .chip.on { background: var(--wx-chipbg); border-color: var(--wx-green); color: var(--wx-green); }
+:root[data-theme]:where(:not([data-theme="light"])) .seg-item.active { border-color: var(--wx-green); background: var(--wx-chipbg); color: var(--wx-green); }
+:root[data-theme]:where(:not([data-theme="light"])) .seg-item.active span { color: var(--wx-green); }
+
+/* 滚动条 / 选区 / 引用 / 徽标 / 上下文条 / 同步态 */
+:root[data-theme]:where(:not([data-theme="light"])) ::-webkit-scrollbar-thumb { background: var(--wx-scroll); }
+:root[data-theme]:where(:not([data-theme="light"])) ::-webkit-scrollbar-thumb:hover { background: var(--wx-scroll-hover); }
+:root[data-theme]:where(:not([data-theme="light"])) ::selection { background: var(--wx-select); }
+
+:root[data-theme]:where(:not([data-theme="light"])) .quote-card .quote-ref { background: var(--wx-hi); }
+:root[data-theme]:where(:not([data-theme="light"])) .msg.me .quote-card .quote-ref { background: var(--wx-hi2); }
+:root[data-theme]:where(:not([data-theme="light"])) .c-badge,
+:root[data-theme]:where(:not([data-theme="light"])) .gh-folder .gh-count { background: var(--wx-hi); color: var(--wx-text-2); }
+
+:root[data-theme]:where(:not([data-theme="light"])) .ctx-bar { color: var(--wx-text-2); background: var(--wx-hi); border-bottom: 1px solid var(--wx-line); }
+:root[data-theme]:where(:not([data-theme="light"])) .sync-state.stale { color: #D9B25A; background: var(--wx-hi); }
+:root[data-theme]:where(:not([data-theme="light"])) .sync-state.fresh { color: var(--wx-green); background: var(--wx-hi); }
+
+/* =========================================================
+ * 3. 通用艺术效果（所有 [data-theme] 生效，含默认浅色）
+ *    通过 var() 自动跟随每套主题的强调色与色板。
+ *    效果清单与触发变量见 docs/effects.md。
+ * ========================================================= */
+
+/* 每套独有背景氛围（body 伪元素，不新增 DOM） */
+:root[data-theme] body::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: var(--wx-aura, none);
+}
+
+/* 关键修复：body::before 壁纸/极光层是 z-index:-1，会被 body 自身的不透明
+   背景盖死。主题激活时把 body 背景改透明，根元素给兜底底色，让背景层浮到
+   玻璃面板背后、被 backdrop-filter 虚化出来。默认浅色保持实色不变。
+   html 兜底由 var(--wx-bg) 自动跟随（Task B）：深色主题仍是深色，
+   浅色 Aura 家族（kawaii/guochao）自动拿到浅色兜底，无需再维护 id 列表。
+   注：body::before 的氛围层始终铺满视口且末层不透明，故此兜底色实际不可见，
+   仅在壁纸为透明 PNG 等边界情况下透出，与改造前行为一致。 */
+:root[data-theme]:where(:not([data-theme="light"])) body,
+body.wm-has-wallpaper { background: transparent; }
+
+:root[data-theme]:where(:not([data-theme="light"])) html { background: var(--wx-bg); }
+
+/* 面板发丝级边框（所有主题） */
+:root[data-theme] .titlebar,
+:root[data-theme] .tabbar,
+:root[data-theme] .sidebar,
+:root[data-theme] .chat,
+:root[data-theme] .chat-head,
+:root[data-theme] .find-bar { border-color: var(--wx-glass-line); }
+
+/* 头像光环（会话 / 消息 / 自头像） */
+:root[data-theme] .session .ava,
+:root[data-theme] .msg .mava {
+  box-shadow: 0 0 0 1px var(--wx-ava-ring), 0 0 12px -3px var(--wx-glow);
+}
+:root[data-theme] .sidebar-top .avatar {
+  box-shadow: 0 0 14px -2px var(--wx-glow);
+}
+
+/* 我的气泡：渐变 + 柔光；对方气泡：玻璃微透 + 发丝边 */
+:root[data-theme] .msg.me .bubble {
+  background: var(--wx-bubble-me-grad); color: var(--wx-bubble-me-text);
+  box-shadow: 0 2px 12px -2px var(--wx-glow);
+}
+:root[data-theme] .msg.me .bubble::before { border-left-color: var(--wx-bubble-me-tail); }
+:root[data-theme] .msg.you .bubble {
+  background: var(--wx-bubble-you-bg); color: var(--wx-bubble-you-text);
+  border: 1px solid var(--wx-glass-line);
+}
+:root[data-theme] .msg.you .bubble::before { border-right-color: var(--wx-bubble-you-tail); }
+
+/* 选中会话：左侧流光条（动画） + 柔和外辉光 */
+:root[data-theme] .session.active { box-shadow: 0 0 0 1px var(--wx-glass-line); }
+:root[data-theme] .session.active::after {
+  content: ''; position: absolute; left: 0; top: 22%; bottom: 22%; width: 3px; border-radius: 0 2px 2px 0;
+  background: linear-gradient(180deg, transparent, var(--wx-green), transparent);
+  background-size: 100% 220%; animation: wm-shimmer 2.6s linear infinite;
+}
+@keyframes wm-shimmer { 0% { background-position: 0 0; } 100% { background-position: 0 -220%; } }
+
+/* 激活 Tab：左侧条 + 柔光 */
+:root[data-theme] .tabbar .tab.active { filter: drop-shadow(0 0 6px var(--wx-glow-soft)); }
+
+/* 卡片类（统计卡 / 面板 / 个人卡）：发丝边 + 悬浮微抬升 */
+:root[data-theme] .stat-card,
+:root[data-theme] .panel,
+:root[data-theme] .me-card {
+  border: 1px solid var(--wx-glass-line);
+  transition: transform .15s, box-shadow .15s;
+}
+:root[data-theme] .stat-card:hover,
+:root[data-theme] .panel:hover,
+:root[data-theme] .me-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 26px -8px var(--wx-glow);
+}
+
+/* 图表渐变填充 */
+:root[data-theme] .bar-fill { background: linear-gradient(90deg, var(--wx-green), var(--wx-green-deep)); }
+:root[data-theme] .rank-fill { background: linear-gradient(90deg, var(--wx-green), var(--wx-green-deep)); opacity: .85; }
+:root[data-theme] .col-bar { background: linear-gradient(180deg, var(--wx-green), var(--wx-green-deep)); border-radius: 3px 3px 0 0; }
+
+/* 主按钮 / 启动 logo：强调色渐变辉光 */
+:root[data-theme] .btn-primary {
+  background: linear-gradient(135deg, var(--wx-green), var(--wx-green-deep));
+  box-shadow: 0 4px 14px -4px var(--wx-glow);
+}
+:root[data-theme] .boot .logo {
+  background: linear-gradient(135deg, var(--wx-green), var(--wx-green-deep));
+  box-shadow: 0 8px 28px -6px var(--wx-glow);
+}
+
+/* 转账 / 红包卡片：悬浮掠光（语义色保持原样，仅加动效） */
+:root[data-theme] .pay-card { position: relative; overflow: hidden; }
+:root[data-theme] .pay-card::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.22) 50%, transparent 65%);
+  transform: translateX(-120%); transition: transform .5s;
+}
+:root[data-theme] .pay-card:hover::after { transform: translateX(120%); }
+
+/* =========================================================
+ * 4. 非浅色家族玻璃面板
+ *    默认浅色（Opaque）--wx-glass-blur:0px 且 body 不透明，
+ *    已排除在本组之外，保持实色不玻璃化。
+ * ========================================================= */
+:root[data-theme]:where(:not([data-theme="light"])) .titlebar,
+:root[data-theme]:where(:not([data-theme="light"])) .tabbar,
+:root[data-theme]:where(:not([data-theme="light"])) .sidebar,
+:root[data-theme]:where(:not([data-theme="light"])) .chat,
+:root[data-theme]:where(:not([data-theme="light"])) .chat-head,
+:root[data-theme]:where(:not([data-theme="light"])) .find-bar {
+  -webkit-backdrop-filter: blur(var(--wx-glass-blur)) saturate(118%);
+  backdrop-filter: blur(var(--wx-glass-blur)) saturate(118%);
+}
+:root[data-theme]:where(:not([data-theme="light"])) .titlebar { background: var(--wx-glass-bg); }
+:root[data-theme]:where(:not([data-theme="light"])) .tabbar { background: var(--wx-glass2); }
+:root[data-theme]:where(:not([data-theme="light"])) .sidebar { background: var(--wx-glass2); }
+:root[data-theme]:where(:not([data-theme="light"])) .chat { background: var(--wx-glass-bg); }
+:root[data-theme]:where(:not([data-theme="light"])) .chat-body { background: transparent; }
+:root[data-theme]:where(:not([data-theme="light"])) .chat-head { background: var(--wx-glass-bg); }
+:root[data-theme]:where(:not([data-theme="light"])) .find-bar { background: var(--wx-glass-bg); }
+
+/* 弹窗 / 启动页玻璃化 —— 深色 Aura 家族（沿用改造前的深色实测值） */
+:root[data-theme]:where(:not([data-theme="light"]):not([data-theme="kawaii"]):not([data-theme="guochao"])) .modal-card {
+  background: rgba(20,26,33,.74);
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,.1);
+}
+:root[data-theme]:where(:not([data-theme="light"]):not([data-theme="kawaii"]):not([data-theme="guochao"])) .boot {
+  background: rgba(10,13,18,.82);
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+}
+
+/* 弹窗 / 启动页玻璃化 —— 浅色 Aura 家族（kawaii / guochao）
+   深色玻璃 + 深色 --wx-text 会导致弹窗内文字不可读，故走浅色玻璃。 */
+:root[data-theme]:where([data-theme="kawaii"],[data-theme="guochao"]) .modal-card {
+  background: var(--wx-glass-bg);
+  -webkit-backdrop-filter: blur(20px) saturate(120%); backdrop-filter: blur(20px) saturate(120%);
+  border: 1px solid var(--wx-glass-line);
+  color: var(--wx-text);
+}
+:root[data-theme]:where([data-theme="kawaii"],[data-theme="guochao"]) .boot {
+  background: var(--wx-glass-bg);
+  -webkit-backdrop-filter: blur(20px) saturate(120%); backdrop-filter: blur(20px) saturate(120%);
+  color: var(--wx-text);
+}
+
+/* =========================================================
+ * 5. 组件皮肤（仅作用于指定主题，制造「焕然一新」的观感）
+ * ========================================================= */
+
+/* 霓虹终端：等宽字体 + 直角 + 扫描线 */
+:root[data-theme="terminal"] body,
+:root[data-theme="terminal"] .titlebar,
+:root[data-theme="terminal"] .tabbar,
+:root[data-theme="terminal"] .sidebar,
+:root[data-theme="terminal"] .chat,
+:root[data-theme="terminal"] .session,
+:root[data-theme="terminal"] .msg,
+:root[data-theme="terminal"] .modal-card {
+  font-family: "Sarasa Mono SC","JetBrains Mono","Cascadia Code",Consolas,"SF Mono",ui-monospace,monospace;
+}
+:root[data-theme="terminal"] .session,
+:root[data-theme="terminal"] .bubble,
+:root[data-theme="terminal"] .stat-card,
+:root[data-theme="terminal"] .panel,
+:root[data-theme="terminal"] .me-card,
+:root[data-theme="terminal"] .modal-card,
+:root[data-theme="terminal"] .seg-item,
+:root[data-theme="terminal"] .chip,
+:root[data-theme="terminal"] .tabbar .tab { border-radius: 2px !important; }
+:root[data-theme="terminal"] body::after {
+  content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 3px);
+  opacity: .5;
+}
+:root[data-theme="terminal"] .msg.me .bubble { box-shadow: 0 0 16px -3px var(--wx-glow); }
+
+/* 液态玻璃：大圆角 + 重玻璃 */
+:root[data-theme="liquid"] .sidebar,
+:root[data-theme="liquid"] .chat,
+:root[data-theme="liquid"] .titlebar,
+:root[data-theme="liquid"] .tabbar,
+:root[data-theme="liquid"] .modal-card,
+:root[data-theme="liquid"] .stat-card,
+:root[data-theme="liquid"] .panel,
+:root[data-theme="liquid"] .me-card { border-radius: 18px; }
+:root[data-theme="liquid"] .session { border-radius: 14px; }
+:root[data-theme="liquid"] .bubble { border-radius: 20px; }
+
+/* ---------------------------------------------------------
+ * 5.1 --wx-radius 的统一消费（Task A/D/E）
+ *   §3.4 声明了 --wx-radius 但 app.css 从未定义、也无规则消费它，
+ *   §8 里的 --wx-radius 原本是死变量。此处让风格化主题的形状 token 真正生效。
+ *   仅作用于声明了 --wx-radius 的风格化主题，terminal/liquid 的字面量圆角保持不变。
+ * --------------------------------------------------------- */
+:root[data-theme]:where([data-theme="cyber"],[data-theme="kawaii"],[data-theme="glass"],[data-theme="guochao"],[data-theme="mecha"])
+  :is(.sidebar,.chat,.titlebar,.tabbar,.modal-card,.stat-card,.panel,.me-card) { border-radius: var(--wx-radius); }
+:root[data-theme]:where([data-theme="cyber"],[data-theme="kawaii"],[data-theme="glass"],[data-theme="guochao"],[data-theme="mecha"])
+  :is(.session,.seg-item,.chip,.tabbar .tab) { border-radius: var(--wx-radius); }
+:root[data-theme]:where([data-theme="cyber"],[data-theme="kawaii"],[data-theme="glass"],[data-theme="guochao"],[data-theme="mecha"])
+  .bubble { border-radius: var(--wx-radius); }
+
+/* ---------------------------------------------------------
+ * 5.2 赛博霓虹 skin：极淡扫描线（置于内容之上但不挡交互）
+ * --------------------------------------------------------- */
+:root[data-theme="cyber"] body::after {
+  content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0,229,255,.05) 0 1px, transparent 1px 3px);
+  opacity: .5;
+}
+/* 霓虹感强化：气泡与主按钮外辉光更实 */
+:root[data-theme="cyber"] .msg.me .bubble { box-shadow: 0 0 18px -4px var(--wx-glow); }
+
+/* ---------------------------------------------------------
+ * 5.3 甜系可爱 skin：奶白胶囊卡 + 柔粉投影（全圆润）
+ * --------------------------------------------------------- */
+:root[data-theme="kawaii"] :is(.stat-card,.panel,.me-card) { box-shadow: var(--wx-shadow); }
+:root[data-theme="kawaii"] .ava,
+:root[data-theme="kawaii"] .mava,
+:root[data-theme="kawaii"] .avatar { border-radius: 50%; }
+
+/* ---------------------------------------------------------
+ * 5.4 玻璃拟态 skin v5（暗色）：雨窗街灯夜景 + 深色玻璃 + 白字
+ *    · 面板 = 深蓝紫玻璃 + 对角白光高光（左上亮）+ 顶部内高光 + 底部微暗
+ *    · 卡片 = 深玻璃 + 高光 + 深投影（悬浮感，白字恒可读）
+ *    · 全屏颗粒噪点（SVG feTurbulence，打散模糊色带）
+ *    · 气泡：我=靛蓝渐变白字（AA），对方=深玻璃白字（AA）
+ * --------------------------------------------------------- */
+/* 颗粒噪点层：覆盖在玻璃之上，低透明度不挡交互 */
+:root[data-theme="glass"] body::after {
+  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='0.55'/></svg>");
+  opacity: .05; mix-blend-mode: overlay;
+}
+/* 主面板：深色玻璃 + 对角高光（白字永远站在深底上） */
+:root[data-theme="glass"] :is(.titlebar,.tabbar,.sidebar,.chat,.chat-head,.find-bar) {
+  background-image: linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.02) 45%, rgba(255,255,255,.07));
+  -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(0,0,0,.3);
+}
+/* 卡片 / 选中会话：深玻璃 + 高光 + 深投影（悬浮感，文字仍可读） */
+:root[data-theme="glass"] :is(.stat-card,.panel,.me-card,.session.active) {
+  -webkit-backdrop-filter: blur(12px) saturate(135%); backdrop-filter: blur(12px) saturate(135%);
+  background: linear-gradient(135deg, rgba(40,52,102,.78), rgba(16,20,44,.72) 50%, rgba(30,36,78,.74));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), inset 0 -1px 0 rgba(0,0,0,.28), 0 12px 34px -14px rgba(0,0,12,.65);
+}
+/* 气泡：我=靛蓝渐变白字（AA），对方=深玻璃白字（AA） */
+:root[data-theme="glass"] .msg.me .bubble {
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 6px 20px -8px rgba(0,0,12,.6);
+}
+:root[data-theme="glass"] .msg.you .bubble {
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  background: rgba(24,30,62,.66);
+  border: 1px solid rgba(255,255,255,.16);
+}
+/* 启动 logo：磨砂玻璃块 + 高光边 + 柔投影（白十字可读） */
+:root[data-theme="glass"] .boot .logo {
+  background: linear-gradient(135deg, rgba(90,110,190,.55), rgba(24,30,66,.62));
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.34);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.32), 0 12px 34px -10px rgba(0,0,24,.6);
+}
+:root[data-theme="glass"] .boot .logo svg { color: #fff; }
+
+/* ---------------------------------------------------------
+ * 5.5 国潮复古 skin：金描边 + 宣纸纹理 + 衬线标题
+ * --------------------------------------------------------- */
+:root[data-theme="guochao"] :is(.stat-card,.panel,.me-card,.modal-card) {
+  border: 1px solid var(--wx-glass-line);
+  box-shadow: var(--wx-shadow), inset 0 0 0 1px rgba(255,255,255,.5);
+}
+/* 宣纸纤维纹理：极淡斜向叠加，z-index:-1 不挡交互 */
+:root[data-theme="guochao"] body::after {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image:
+    repeating-linear-gradient(115deg, rgba(154,138,110,.05) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(25deg, rgba(154,138,110,.04) 0 1px, transparent 1px 6px);
+  opacity: .8;
+}
+/* 朱红强调下的金色分隔感 */
+:root[data-theme="guochao"] .session.active { box-shadow: 0 0 0 1px var(--wx-glass-line), inset 3px 0 0 var(--wx-green); }
+
+/* =========================================================
+ * 6. 壁纸引擎：用户图片 / 渐变预设作为背景（覆盖氛围层）
+ *    玻璃面板通过 backdrop-filter 实时把它虚化。
+ *    自足写法：自带 content/position/inset，不依赖 :root[data-theme] body::before
+ *    （后者只在非默认浅色主题命中；默认浅色下无 data-theme 属性，
+ *     伪元素会因无 content 而不渲染 → 壁纸静默失效。修复见下）
+ * ========================================================= */
+body.wm-has-wallpaper::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image: var(--wm-wallpaper) !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  /* 壁纸微调：模糊（0–30px）与亮度（0.4–1.6），由引擎 setWallpaperBlur/Brightness 写入 */
+  filter: blur(var(--wm-wp-blur, 0px)) brightness(var(--wm-wp-brightness, 1));
+}
+
+/* =========================================================
+ * 8. 主题管理器 UI（开关 / 预览 / 管理 / 壁纸）—— 始终生效，自包含样式
+ *    用固定深色玻璃外观 + 固定字体栈，确保在任何主题下都清晰可读
+ *    （Task F：不依赖任何业务 token，避免 cyber/guochao 换 --wx-font 后面板变形）。
+ * ========================================================= */
+.wm-theme-btn {
+  -webkit-app-region: no-drag;
+  position: relative;
+  height: 26px; margin-right: 8px; padding: 0 10px;
+  display: flex; align-items: center; gap: 5px;
+  border-radius: 6px; cursor: pointer; color: var(--wx-text-2);
+  font-size: 12px; line-height: 1;
+  transition: background .15s, color .15s;
+}
+.wm-theme-btn .wm-label { white-space: nowrap; }
+.wm-theme-btn:hover { background: var(--wx-hover); color: var(--wx-text); }
+.wm-theme-btn .wm-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  display: inline-block; box-shadow: 0 0 0 2px var(--wx-panel);
+  transition: background .2s;
+}
+/* 小圆点悬浮提示：显示当前主题名 */
+.wm-theme-btn::after {
+  content: "主题 · " var(--wm-cur-name, "微信浅色");
+  position: absolute; top: 32px; left: 50%; transform: translateX(-50%) translateY(-4px);
+  white-space: nowrap; font-size: 11px; line-height: 1; padding: 5px 9px;
+  background: #14181F; color: #E6E9EF;
+  border: 1px solid rgba(255,255,255,.12); border-radius: 7px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.4);
+  opacity: 0; pointer-events: none; z-index: 2500;
+  transition: opacity .15s, transform .15s;
+}
+.wm-theme-btn:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.wm-theme-mask {
+  position: fixed; inset: 0; z-index: 2400;
+  background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .18s;
+}
+.wm-theme-mask.open { opacity: 1; pointer-events: auto; }
+.wm-theme-panel {
+  width: 480px; max-width: 92vw; max-height: 82vh; overflow-y: auto;
+  background: #14181F; color: #E6E9EF;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 14px; padding: 18px 18px 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  /* 自包含字体栈：与 app.css :root 的 --wx-font 默认值一致，
+     但不引用该变量，避免随主题字体（等宽/衬线）变形。 */
+  font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+/* 面板内滚动条固定深色，防止被主题的 --wx-scroll（浅色家族为深色/朱红）影响可读性 */
+.wm-theme-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); }
+.wm-theme-panel::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.3); }
+.wm-theme-panel ::selection { background: rgba(46,230,166,.3); }
+.wm-theme-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.wm-theme-head h3 { font-size: 15px; font-weight: 600; margin: 0; }
+.wm-theme-close {
+  width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #9AA3AF; font-size: 18px; user-select: none;
+}
+.wm-theme-close:hover { background: rgba(255,255,255,.08); color: #fff; }
+.wm-theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.wm-theme-card {
+  position: relative; border-radius: 12px; padding: 12px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03);
+  transition: border-color .15s, transform .12s, background .15s;
+}
+.wm-theme-card:hover { border-color: rgba(255,255,255,.22); transform: translateY(-2px); }
+.wm-theme-card.active { border-color: #2EE6A6; background: rgba(46,230,166,.08); }
+.wm-theme-swatches { display: flex; gap: 6px; margin-bottom: 10px; }
+.wm-theme-sw { width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(255,255,255,.12); }
+.wm-theme-name { font-size: 13px; font-weight: 600; color: #EAF0EE; }
+.wm-theme-desc { font-size: 11px; color: #9AA3AF; margin-top: 2px; line-height: 1.4; }
+.wm-theme-now {
+  position: absolute; top: 10px; right: 10px; font-size: 10px; color: #2EE6A6;
+  background: rgba(46,230,166,.14); padding: 1px 7px; border-radius: 8px;
+}
+/* 主题卡片上的效果徽标（声明了引擎效果运行时的主题） */
+.wm-theme-fx {
+  display: inline-block; margin-top: 6px; font-size: 10px; line-height: 1.6;
+  color: #9CC4FF; background: rgba(156,196,255,.12);
+  border: 1px solid rgba(156,196,255,.22); padding: 0 6px; border-radius: 6px;
+}
+
+/* 壁纸分区 */
+.wm-wp-title { font-size: 12px; color: #9AA3AF; margin: 16px 0 8px; display: flex; align-items: center; justify-content: space-between; }
+.wm-wp-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.wm-wp-sw {
+  width: 42px; height: 30px; border-radius: 7px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,.14); background-size: cover; background-position: center;
+  transition: border-color .15s, transform .12s;
+}
+.wm-wp-sw:hover { transform: translateY(-1px); }
+.wm-wp-sw.active { border-color: #2EE6A6; box-shadow: 0 0 0 2px rgba(46,230,166,.25); }
+/* 壁纸微调滑块（模糊 / 亮度） */
+.wm-wp-adjust { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+.wm-wp-adj { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #9AA3AF; flex: 1; min-width: 150px; }
+.wm-wp-adj span { flex: none; }
+.wm-wp-adj input[type="range"] { flex: 1; min-width: 0; accent-color: #2EE6A6; height: 14px; cursor: pointer; }
+.wm-wp-adj em { flex: none; font-style: normal; width: 26px; text-align: right; color: #D5DEE8; font-size: 11px; }
+.wm-wp-upload {
+  font-size: 11px; color: #C9D1DA; cursor: pointer;
+  border: 1px dashed rgba(255,255,255,.22); padding: 6px 10px; border-radius: 7px;
+  transition: color .15s, border-color .15s;
+}
+.wm-wp-upload:hover { color: #fff; border-color: rgba(255,255,255,.45); }
+/* 壁纸体积提示（Task G：超限时只本次会话生效） */
+.wm-wp-note { font-size: 10px; color: #C08A5A; margin-top: 6px; line-height: 1.5; display: none; }
+.wm-wp-note.show { display: block; }
+
+.wm-theme-foot {
+  margin-top: 16px; font-size: 11px; color: #6B7480;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.wm-theme-reset {
+  font-size: 12px; color: #9AA3AF; cursor: pointer;
+  border: 1px solid rgba(255,255,255,.12); padding: 4px 10px; border-radius: 6px;
+}
+.wm-theme-reset:hover { color: #fff; border-color: rgba(255,255,255,.3); }
+
+/* =========================================================
+ * 9. 内嵌字体（cyber / guochao 的字体依赖）
+ *    src 顺序：先 local() 用系统已装字体，再回退到打包的 woff2。
+ *    两者都不可用时 @font-face 静默失效，font-family 继续回退到
+ *    ui-monospace / serif —— 符合 THEME_ENGINE.md §3.4「不报错」要求。
+ *    字体文件目录：src/renderer/assets/fonts/（build.js 整目录复制，自动进 dist）
+ * ========================================================= */
+@font-face {
+  font-family: "Share Tech Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local("Share Tech Mono"),
+       url("../assets/fonts/ShareTechMono-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Noto Serif SC";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local("Noto Serif SC"), local("Source Han Serif SC"),
+       url("../assets/fonts/NotoSerifSC-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Noto Serif SC";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local("Noto Serif SC"), local("Source Han Serif SC"),
+       url("../assets/fonts/NotoSerifSC-Bold.woff2") format("woff2");
+}
+
+/* =========================================================
+ * 10. 效果运行时装饰层（Task I）
+ *     引擎在 body 末尾挂载 #wx-deco-layer，主题只声明 effects，
+ *     助手只写这一层，不触碰业务 DOM（THEME_ENGINE.md §1.3 / §1.5.1）。
+ * ========================================================= */
+#wx-deco-layer {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  overflow: hidden;
+}
+/* 光标跟随辉光：坐标由引擎写入 --wx-cx / --wx-cy（只读 token、只写本层） */
+#wx-deco-layer .wx-cursor-glow {
+  position: absolute; left: 0; top: 0;
+  width: 460px; height: 460px; margin: -230px 0 0 -230px;
+  border-radius: 50%;
+  transform: translate3d(var(--wx-cx, -9999px), var(--wx-cy, -9999px), 0);
+  background: radial-gradient(circle, var(--wx-glow) 0%, transparent 62%);
+  opacity: .5; will-change: transform;
+  transition: opacity .3s;
+}
+/* 轻量粒子 / 星空画布 */
+#wx-deco-layer .wx-particles {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  opacity: .85;
+}
+/* 换肤过渡：一次性的全屏强调色晕开（单元素，零布局开销） */
+#wx-deco-layer .wx-theme-flash {
+  position: absolute; inset: 0;
+  background: radial-gradient(120% 120% at 50% 50%, var(--wx-glow) 0%, transparent 70%);
+  opacity: 0;
+  animation: wm-theme-flash .5s ease-out forwards;
+}
+@keyframes wm-theme-flash {
+  0%   { opacity: .55; }
+  100% { opacity: 0; }
+}
+/* 换肤过渡：仅对 7 个 chrome 面板做短促底色过渡。
+   刻意不含 .session / .bubble —— 会话与消息可能上千节点，
+   给它们加 transition 会在换肤瞬间造成明显掉帧（红线 #6 性能约束）。 */
+:root.wx-theming :is(body,.titlebar,.tabbar,.sidebar,.chat,.chat-head,.find-bar) {
+  transition: background-color .3s ease, color .3s ease, border-color .3s ease;
+}
+
+/* 无障碍降级：系统开启「减少动态效果」时，
+   关闭逐帧/高强度动效，装饰层退化为静态（§1.5.1 强制要求）。 */
+@media (prefers-reduced-motion: reduce) {
+  #wx-deco-layer .wx-cursor-glow { display: none; }
+  #wx-deco-layer .wx-particles { opacity: .35; }
+  #wx-deco-layer .wx-theme-flash { animation: none; opacity: 0; }
+  :root.wx-theming :is(body,.titlebar,.tabbar,.sidebar,.chat,.chat-head,.find-bar) { transition: none; }
+  :root[data-theme] .session.active::after { animation: none; }
+}
+
+/* =========================================================
+ * 11. 机械机甲 mecha（亮/暗变体）
+ *     亮 = 银白金属 + 能量蓝；暗 = 碳黑金属 + 能量蓝/橙。
+ *     变体只改配色 token，皮肤（金属高光/直角/扫描线/能量条/按压反馈）
+ *     挂在 :root[data-theme="mecha"] 下，对亮暗一视同仁——亮暗开关不动风格与 UI。
+ *     亮色属浅色 Aura 家族：叠加层必须翻成深色，否则浅底上占位/滚动条/选区隐形。
+ * ========================================================= */
+
+/* —— mecha 亮色（默认变体）—— */
+:root[data-theme="mecha"] {
+  --wx-bg:#DCE3EC; --wx-panel:#EFF3F8; --wx-sidebar:#E6EBF2; --wx-line:#C4CDD9; --wx-line-strong:#AEB9C9;
+  --wx-text:#1C2530; --wx-text-2:#5B6B7C; --wx-text-3:#8B97A6;
+  --wx-green:#00A8FF; --wx-green-deep:#0078D4; --wx-blue:#FF8A00;
+  --wx-hover:#E1E8F1; --wx-active:#D8E1EC; --wx-red:#E5484D; --wx-white:#FFFFFF;
+  --wx-bubble-me:#0078D4; --wx-bubble-you:#FFFFFF; --wx-avatar:#DCE4EE;
+  --wx-shadow:0 2px 12px rgba(28,37,48,.12);
+  --wx-surface:#E7EDF4; --wx-track:#DCE4EE; --wx-chipbg:rgba(0,168,255,.12);
+  --wx-glass:rgba(255,255,255,.55); --wx-glass2:rgba(255,255,255,.45); --wx-glass-line:rgba(0,168,255,.26);
+  --wx-hi:rgba(0,168,255,.06); --wx-hi2:rgba(0,168,255,.1);
+  --wx-glow:rgba(0,168,255,.4); --wx-glow-soft:rgba(0,168,255,.18);
+  --wx-aura: url("../assets/themes/mecha-light-bg.png") center/cover no-repeat,
+             radial-gradient(1000px 700px at 18% 0%, rgba(0,168,255,.16), transparent 55%),
+             linear-gradient(135deg,#E3E9F1,#D6DEE9);
+  --wx-glass-bg:rgba(255,255,255,.5); --wx-glass-blur:8px; /* 模糊降低，金属拉丝纹理更清晰 */
+  --wx-bubble-me-grad:linear-gradient(135deg,#00A8FF,#0078D4); --wx-bubble-me-tail:#0078D4; --wx-bubble-me-text:#FFFFFF;
+  --wx-bubble-you-bg:#FFFFFF; --wx-bubble-you-tail:#FFFFFF; --wx-bubble-you-text:#1C2530;
+  --wx-ava-ring:rgba(0,168,255,.45);
+  --wx-radius:4px; /* 机械锐利 */
+  --wx-hazard: repeating-linear-gradient(-45deg, rgba(255,138,0,.55) 0 5px, rgba(28,37,48,.5) 5px 10px);
+  /* 金属材质 token（§11 共用皮肤消费）：亮色=银白高光 */
+  --wx-metal-hi:rgba(255,255,255,.9); --wx-metal-mid:rgba(255,255,255,.28); --wx-metal-edge:rgba(28,37,48,.22);
+  --wx-metal-amb:rgba(0,168,255,.16); /* 环境反射色（冷蓝） */
+  /* 浅色家族：叠加层翻深（墨蓝），滚动条/选区走能量蓝 */
+  --wx-overlay:rgba(28,37,48,.06); --wx-overlay-weak:rgba(28,37,48,.05);
+  --wx-overlay-strong:rgba(28,37,48,.08); --wx-overlay-heavy:rgba(28,37,48,.1);
+  --wx-scroll:rgba(0,168,255,.3); --wx-scroll-hover:rgba(0,168,255,.5);
+  --wx-select:rgba(0,168,255,.2);
+}
+
+/* —— mecha 暗色变体 v3：黑金装甲（data-variant="dark"）
+   黑金收敛：中性黑底（不泛黄）+ 亮金只做点缀（能量条/辉光/描边/logo），
+   大面积表面（气泡/按钮/面板）一律深色金属底，金仅描边。 */
+:root[data-theme="mecha"][data-variant="dark"] {
+  --wx-bg:#0B0B0C; --wx-panel:#131313; --wx-sidebar:#0F0F10; --wx-line:#2A2A28; --wx-line-strong:#3A3A36;
+  --wx-text:#F2EDE2; --wx-text-2:#B5AC97; --wx-text-3:#7D7664;
+  --wx-green:#E3B341; --wx-green-deep:#B8860B; --wx-blue:#F5D06F;
+  --wx-hover:#1E1D1A; --wx-active:#262420; --wx-red:#FF7A5C; --wx-white:#131313;
+  --wx-bubble-me:#B8860B; --wx-bubble-you:#141414; --wx-avatar:#201F1B;
+  --wx-shadow:0 2px 14px rgba(0,0,0,.55);
+  --wx-surface:#1A1A19; --wx-track:#242422; --wx-chipbg:rgba(227,179,65,.1);
+  --wx-glass:rgba(255,255,255,.04); --wx-glass2:rgba(255,255,255,.03); --wx-glass-line:rgba(227,179,65,.22);
+  --wx-hi:rgba(255,255,255,.04); --wx-hi2:rgba(255,255,255,.07);
+  --wx-glow:rgba(227,179,65,.5); --wx-glow-soft:rgba(227,179,65,.22);
+  --wx-aura: url("../assets/themes/mecha-dark-bg.png") center/cover no-repeat,
+             radial-gradient(1000px 700px at 16% 0%, rgba(227,179,65,.06), transparent 58%),
+             radial-gradient(900px 600px at 92% 100%, rgba(180,120,30,.07), transparent 55%),
+             linear-gradient(135deg,#0B0B0C,#0E0E0F);
+  --wx-glass-bg:rgba(8,8,9,.55); --wx-glass-blur:10px; /* 模糊降低，装甲纹理更清晰 */
+  --wx-bubble-me-grad:linear-gradient(135deg,#3A352A,#232018); --wx-bubble-me-tail:#232018; --wx-bubble-me-text:#F2EDE2;
+  --wx-bubble-you-bg:rgba(255,255,255,.05); --wx-bubble-you-tail:rgba(255,255,255,.05); --wx-bubble-you-text:#E6E0D2;
+  --wx-ava-ring:rgba(227,179,65,.45);
+  --wx-hazard: repeating-linear-gradient(-45deg, rgba(227,179,65,.45) 0 5px, rgba(6,5,2,.75) 5px 10px);
+  /* 金属材质 token（§11 共用皮肤消费）：暗色=香槟金高光（收敛，金只点缀） */
+  --wx-metal-hi:rgba(255,240,200,.45); --wx-metal-mid:rgba(227,179,65,.14); --wx-metal-edge:rgba(227,179,65,.26);
+  --wx-metal-amb:rgba(227,179,65,.07); /* 环境反射色（暖金，克制） */
+  /* 黑金家族：金色叠加收敛为点缀 */
+  --wx-overlay:rgba(255,255,255,.05); --wx-overlay-weak:rgba(255,255,255,.04);
+  --wx-overlay-strong:rgba(255,255,255,.08); --wx-overlay-heavy:rgba(227,179,65,.12);
+  --wx-scroll:rgba(227,179,65,.22); --wx-scroll-hover:rgba(227,179,65,.38);
+  --wx-select:rgba(227,179,65,.24);
+}
+
+/* —— mecha 暗色皮肤微调：金只做点缀（深底 + 金描边，不整块金黄）—— */
+:root[data-theme="mecha"][data-variant="dark"] .msg.me .bubble {
+  border: 1px solid rgba(227,179,65,.32);
+  box-shadow: inset 0 1px 0 rgba(255,240,200,.28), 0 2px 12px -2px rgba(227,179,65,.28);
+}
+:root[data-theme="mecha"][data-variant="dark"] .msg.you .bubble {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), inset 0 -1px 0 rgba(0,0,0,.3);
+}
+:root[data-theme="mecha"][data-variant="dark"] .modal-card {
+  background-image: linear-gradient(180deg, var(--wx-metal-mid), transparent 40%);
+  box-shadow: inset 0 2px 0 var(--wx-metal-hi), inset 0 0 0 1px var(--wx-metal-edge), 0 18px 44px -18px rgba(0,0,0,.75);
+}
+:root[data-theme="mecha"][data-variant="dark"] .btn-primary {
+  background: linear-gradient(135deg, #232018, #1A1713);
+  border: 1px solid rgba(227,179,65,.45);
+  color: #F2EDE2;
+}
+:root[data-theme="mecha"][data-variant="dark"] .btn-primary:hover {
+  background: linear-gradient(135deg, #2E2A1E, #232018);
+  filter: drop-shadow(0 4px 12px rgba(227,179,65,.3)) brightness(1.08);
+}
+:root[data-theme="mecha"][data-variant="dark"] :is(.session.active,.tabbar .tab.active) {
+  color: var(--wx-green);
+}
+
+/* —— mecha 皮肤 v2（亮暗共用：装甲切角 / 警示条 / 角括号 / 能量辉光 / 交互反馈）——
+   张力来源：切角（clip-path + drop-shadow 保留辉光）、斜切警示条、L 形角括号、双色能量条 */
+
+/* 金属高光线：面板顶部亮线 + 分隔 */
+:root[data-theme="mecha"] .titlebar,
+:root[data-theme="mecha"] .chat-head { box-shadow: inset 0 1px 0 var(--wx-glass-line); }
+:root[data-theme="mecha"] .sidebar { box-shadow: inset -1px 0 0 var(--wx-line); }
+
+/* 机械直角头像 */
+:root[data-theme="mecha"] .ava,
+:root[data-theme="mecha"] .mava,
+:root[data-theme="mecha"] .avatar { border-radius: 4px; }
+
+/* 全屏复合层：极淡扫描线 + 对角能量斜线（装甲板接缝感，不挡交互） */
+:root[data-theme="mecha"] body::after {
+  content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    repeating-linear-gradient(-55deg, transparent 0 92px, var(--wx-glass-line) 92px 93px, transparent 93px 140px),
+    repeating-linear-gradient(0deg, var(--wx-green) 0 1px, transparent 1px 4px);
+  opacity: .06;
+}
+
+/* 标题栏底缘：斜切危险警示条（机械双色，亮/暗由 token 控制） */
+:root[data-theme="mecha"] .titlebar { position: relative; }
+:root[data-theme="mecha"] .titlebar::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: var(--wx-hazard);
+  opacity: .75;
+}
+
+/* 装甲切角：卡片/弹窗/主按钮切掉对角，drop-shadow 让辉光随形（不依赖被裁的 box-shadow） */
+:root[data-theme="mecha"] :is(.stat-card,.panel,.me-card,.modal-card,.btn-primary) {
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  border-radius: 0;
+}
+:root[data-theme="mecha"] :is(.stat-card,.panel,.me-card) {
+  box-shadow: none;
+  filter: drop-shadow(0 1px 0 var(--wx-glass-line));
+}
+:root[data-theme="mecha"] :is(.stat-card,.panel,.me-card):hover {
+  filter: drop-shadow(0 10px 20px var(--wx-glow));
+}
+
+/* ========================================================
+ * 金属材质层（mecha 皮肤核心升级）：
+ *   ① 顶部高光 / 底部暗边 → 体积感
+ *   ② 明暗过渡（顶部金属光晕）→ 光影层次
+ *   ③ 极细拉丝纹理（3px 间隔，透明度极低）→ 金属表面细节
+ *   ④ 侧缘 1px 高光/阴影 → 硬度感
+ *   ⑤ 底部环境反射色（亮=冷蓝 / 暗=暖金）→ 环境光反馈
+ *   ⑥ 深度拟态：双层内阴影 + 外投影（面板厚实、悬浮分层）
+ * 聊天区不加拉丝（避免干扰消息阅读），仅保留光晕与高光。
+ * ======================================================== */
+:root[data-theme="mecha"] :is(.titlebar,.tabbar,.sidebar,.chat-head,.find-bar) {
+  background-image:
+    repeating-linear-gradient(90deg, transparent 0 3px, rgba(255,255,255,.014) 3px 4px),
+    repeating-linear-gradient(0deg, transparent 0 5px, rgba(255,255,255,.01) 5px 6px),
+    linear-gradient(180deg, var(--wx-metal-mid), transparent 38%);
+  box-shadow:
+    inset 0 2px 0 var(--wx-metal-hi),
+    inset 0 -1px 0 var(--wx-metal-edge),
+    inset 1px 0 0 rgba(255,255,255,.05),
+    inset -1px 0 0 rgba(0,0,0,.08),
+    0 2px 8px rgba(0,0,0,.16);
+}
+:root[data-theme="mecha"] .chat {
+  background-image:
+    linear-gradient(180deg, var(--wx-metal-mid), transparent 30%),
+    radial-gradient(120% 60% at 50% 108%, rgba(0,0,0,.22), transparent 62%);
+  box-shadow:
+    inset 0 2px 0 var(--wx-metal-hi),
+    inset 0 -1px 0 var(--wx-metal-edge);
+}
+/* 卡片金属：左上高光 + 底部环境反射 + 内描边 + 立体抬升（clip-path 裁不掉 inset） */
+:root[data-theme="mecha"] :is(.stat-card,.panel,.me-card) {
+  background-image:
+    repeating-linear-gradient(90deg, transparent 0 2px, rgba(255,255,255,.012) 2px 3px),
+    linear-gradient(135deg, var(--wx-metal-mid), transparent 46%),
+    linear-gradient(180deg, transparent 68%, var(--wx-metal-amb));
+  box-shadow:
+    inset 0 2px 0 var(--wx-metal-hi),
+    inset 0 -2px 0 var(--wx-metal-edge),
+    inset 0 0 0 1px var(--wx-metal-edge),
+    0 1px 0 rgba(255,255,255,.08),
+    0 6px 14px -8px rgba(0,0,0,.5);
+}
+/* 选中会话：双层能量条 + 内嵌面板感 */
+:root[data-theme="mecha"] .session.active {
+  background-image: linear-gradient(90deg, var(--wx-hi2), transparent 55%);
+}
+:root[data-theme="mecha"] .session.active::after {
+  box-shadow: 0 0 10px var(--wx-glow), inset 0 0 2px rgba(255,255,255,.5);
+}
+/* 气泡金属：顶部高光描边（我=能量渐变已有，补高光更硬朗） */
+:root[data-theme="mecha"] .msg.me .bubble {
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.38), inset 0 -1px 0 rgba(0,0,0,.18), 0 2px 12px -2px var(--wx-glow);
+}
+:root[data-theme="mecha"] .msg.you .bubble {
+  box-shadow: inset 0 1px 0 var(--wx-metal-mid), 0 1px 2px rgba(0,0,0,.18);
+}
+
+/* L 形角括号：卡片四角机械定位符（避开 ::after 能量条占用） */
+:root[data-theme="mecha"] :is(.stat-card,.panel,.me-card) { position: relative; }
+:root[data-theme="mecha"] :is(.stat-card,.panel,.me-card)::before,
+:root[data-theme="mecha"] :is(.stat-card,.panel,.me-card)::after {
+  content: ''; position: absolute; width: 9px; height: 9px; border: 2px solid var(--wx-green); opacity: .85;
+}
+:root[data-theme="mecha"] :is(.stat-card,.panel,.me-card)::before { top: 3px; left: 3px; border-right: none; border-bottom: none; }
+:root[data-theme="mecha"] :is(.stat-card,.panel,.me-card)::after { bottom: 3px; right: 3px; border-left: none; border-top: none; }
+
+/* 选中会话：双色能量条（青→橙，机械双能源）+ 辉光 */
+:root[data-theme="mecha"] .session.active::after {
+  width: 4px; border-radius: 0;
+  background: linear-gradient(180deg, transparent, var(--wx-green) 25%, var(--wx-blue) 75%, transparent);
+  box-shadow: 0 0 10px var(--wx-glow);
+}
+:root[data-theme="mecha"] .session.active { box-shadow: 0 0 0 1px var(--wx-glass-line); }
+
+/* 激活 Tab：柔光（移除高亮下横线，用户要求） */
+:root[data-theme="mecha"] .tabbar .tab.active { filter: drop-shadow(0 2px 6px var(--wx-glow-soft)); }
+
+/* 启动 logo：机械六边形徽章（SVG mask 裁剪，双色能量渐变 + 辉光随形） */
+:root[data-theme="mecha"] .boot .logo {
+  border-radius: 4px;
+  background: linear-gradient(135deg, var(--wx-green), var(--wx-blue));
+  -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path fill='black' fill-rule='evenodd' d='M32 4 L56 19 V45 L32 60 L8 45 V19 Z M32 12 L49 22.5 V41.5 L32 52 L15 41.5 V22.5 Z'/></svg>");
+  mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path fill='black' fill-rule='evenodd' d='M32 4 L56 19 V45 L32 60 L8 45 V19 Z M32 12 L49 22.5 V41.5 L32 52 L15 41.5 V22.5 Z'/></svg>");
+  -webkit-mask-size: cover; mask-size: cover;
+  box-shadow: none;
+  filter: drop-shadow(0 0 16px var(--wx-glow));
+}
+:root[data-theme="mecha"] .boot .logo svg { display: none; }
+
+/* —— 交互反馈（hover/active 按压感，纯 CSS，reduced-motion 下过渡自然退化）—— */
+:root[data-theme="mecha"] .session { transition: box-shadow .12s, background-color .12s; }
+:root[data-theme="mecha"] .session:hover { box-shadow: inset 3px 0 0 var(--wx-green), inset 0 0 14px -6px var(--wx-glow-soft); }
+:root[data-theme="mecha"] :is(.stat-card,.panel,.me-card) {
+  transition: transform .12s, filter .18s, border-color .18s;
+}
+:root[data-theme="mecha"] :is(.stat-card,.panel,.me-card):hover {
+  transform: translateY(-2px);
+  border-color: var(--wx-green);
+}
+:root[data-theme="mecha"] .btn-primary {
+  transition: transform .1s, filter .15s;
+}
+:root[data-theme="mecha"] .btn-primary:hover { filter: drop-shadow(0 4px 12px var(--wx-glow)) brightness(1.05); }
+:root[data-theme="mecha"] .btn-primary:active { transform: translateY(1px) scale(.98); filter: brightness(.88); }
+:root[data-theme="mecha"] .seg-item,
+:root[data-theme="mecha"] .chip { transition: transform .08s; }
+:root[data-theme="mecha"] .seg-item:active,
+:root[data-theme="mecha"] .chip:active { transform: scale(.96); }
+
+/* —— 管理器面板内：亮/暗变体切换按钮（机械胶囊）——
+   只有声明 variants 的主题（mecha）渲染，面板本身保持固定深色外观。 */
+.wm-variant-row { margin-top: 6px; display: flex; gap: 6px; }
+.wm-variant-btn {
+  font-size: 10px; line-height: 1; padding: 4px 11px; border-radius: 4px; cursor: pointer;
+  color: #C9D1DA; background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.14);
+  transition: color .12s, background .12s, border-color .12s, transform .08s;
+  user-select: none;
+}
+.wm-variant-btn:hover { color: #fff; border-color: rgba(156,196,255,.45); }
+.wm-variant-btn:active { transform: scale(.94); }
+.wm-variant-btn.active {
+  color: #03121A; background: #00C2FF; border-color: #00C2FF; font-weight: 600;
+}

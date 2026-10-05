@@ -1,0 +1,41 @@
+# electron-builder 配置 — WeMemo 打包
+# 用法: npm run pack（先 build.js 再打包）
+
+appId: com.wememo.app
+productName: 微忆 WeMemo
+copyright: Copyright © 2026 wememo
+
+# 打包源目录：用 build.js 产出的 dist/（已 minify + pyc 剥离 + 签名注入）
+directories:
+  app: dist
+  output: release
+
+# 启用 asar：JS 全部打进 app.asar（minify + 完整性签名绑定，被动逆向门槛足够）。
+# 引擎（无源 .pyc + Python 运行时）是原生文件，Python 必须从真实磁盘读取，
+# 且无法从 asar 虚拟文件系统加载 —— 故 engine/ 用 extraResources 完整、无过滤地
+# 投递到 resources/engine/（与 app.asar 同级），并在 main.js/loader.js 按
+# app.isPackaged 切到该路径。
+asar: true
+extraResources:
+  - from: dist/engine        # 必须是 build.js 产出的「已编译」引擎（含 .pyc），非源码 engine/
+    to: engine
+
+# Windows 配置
+win:
+  target:
+    - target: portable
+      arch: [x64]
+  icon: assets/icon.png
+  requestedExecutionLevel: asInvoker
+
+portable:
+  artifactName: "WeMemo-${version}-portable.exe"
+
+# 从 asar 中剔除 engine/：它已由 extraResources 投递到 resources/engine（真实磁盘），
+# 不进 app.asar（虚拟 FS，Python 读不到），以免重复体积且读不到。
+files:
+  - "**/*"
+  - "!engine/**"
+  - "!test_*"
+  - "!**/_bench_tmp"
+  - "!**/_verify_tmp"

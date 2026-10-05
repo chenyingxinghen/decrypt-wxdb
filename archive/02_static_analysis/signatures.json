@@ -1,0 +1,24 @@
+{
+  "per_db_patch_point": {
+    "target_rva": "0x3576376",
+    "found_rva": "0x3576376",
+    "roundtrip_ok": true,
+    "pattern": "41 C6 46 ?? ?? 48 8D 4D ?? 41 B8 ?? ?? ?? ??",
+    "mask": "xxx??xxx?xx????",
+    "length": 15,
+    "wildcards": 7,
+    "desc": "inject_keyhook.py 补丁点；此刻 r14 -> 67B x'<hex>' per-db key 串",
+    "dll_version": "4.1.12.55"
+  },
+  "master_upstream": {
+    "target_rva": "0x5DEFB0",
+    "found_rva": "0x5DEFB0",
+    "roundtrip_ok": true,
+    "pattern": "55 41 57 41 56 56 57 53 48 83 EC ?? 48 8D 6C 24 ?? 48 C7 45 ?? ?? ?? ?? ?? 44 89 CF 44 89 C3 49 89 D6 48 89 CE 48 89 D1",
+    "mask": "xxxxxxxxxxx?xxxx?xxx?????xxxxxxxxxxxxxxx",
+    "length": 40,
+    "wildcards": 7,
+    "desc": "登录引导密钥函数入口(4参)；WeFlow 也打这里；做自研 master hook",
+    "dll_version": "4.1.12.55"
+  }
+}

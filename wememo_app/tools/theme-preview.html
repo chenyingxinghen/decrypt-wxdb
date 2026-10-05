@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="glass">
+<head>
+<meta charset="UTF-8" />
+<title>WeMemo 主题质感预览 — 玻璃拟态 / 机械机甲</title>
+<link rel="stylesheet" href="../src/renderer/css/app.css" />
+<link rel="stylesheet" href="../src/renderer/css/app.themes.css" />
+<style>
+  /* —— 预览页外壳（非应用样式，仅用于布局演示）—— */
+  html, body { height: 100%; }
+  body { overflow: hidden; }
+  #pv-bar {
+    position: fixed; z-index: 99; left: 10px; top: 10px;
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    background: rgba(10,12,20,.78); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 10px; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  }
+  #pv-bar .pv-label { font-size: 11px; color: #9AA7B8; margin-right: 2px; }
+  #pv-bar button {
+    font-size: 12px; line-height: 1; padding: 6px 10px; border-radius: 6px; cursor: pointer;
+    color: #D5DEE8; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
+    transition: color .12s, background .12s, border-color .12s;
+  }
+  #pv-bar button:hover { color: #fff; border-color: rgba(156,196,255,.5); }
+  #pv-bar button.active { color: #06121F; background: #00C2FF; border-color: #00C2FF; font-weight: 600; }
+  #pv-bar button[data-v] { padding: 6px 8px; font-size: 11px; }
+  #pv-stage { height: 100vh; padding: 60px 24px 24px; box-sizing: border-box; display: flex; gap: 20px; }
+  .pv-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+  /* 应用窗口 */
+  .pv-window { display: flex; flex-direction: column; height: 560px; border-radius: 14px; overflow: hidden; border: 1px solid var(--wx-glass-line); box-shadow: 0 24px 60px -24px rgba(0,0,0,.45); }
+  .pv-window .titlebar { height: 40px; flex: none; }
+  .pv-window .titlebar .brand { padding-left: 14px; }
+  .pv-window .win-ctrls { margin-left: auto; }
+  .pv-window .win-ctrls .btn { width: 34px; height: 40px; display: flex; align-items: center; justify-content: center; }
+  .pv-row { display: flex; flex: 1; min-height: 0; }
+  /* 统计 / 我的页示例（左列下方） */
+  .pv-me { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .pv-me .full { grid-column: 1 / -1; }
+  /* 遮罩演示 */
+  .pv-overlay { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--wx-glass-line); height: 150px; }
+  .pv-overlay .boot { position: absolute; inset: 0; z-index: 2; }
+  .pv-me .stat-card { padding: 14px 16px; }
+  .stat-card .stat-val { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .stat-card .stat-sub { font-size: 12px; color: var(--wx-text-3); }
+  .panel { padding: 14px 16px; }
+  .panel-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+  .me-card { padding: 14px 16px; }
+  .pv-tip { font-size: 11px; color: var(--wx-text-3); text-align: center; }
+</style>
+</head>
+<body>
+
+<!-- 主题切换条 -->
+<div id="pv-bar">
+  <span class="pv-label">主题：</span>
+  <button data-t="light">微信浅色</button>
+  <button data-t="liquid">液态玻璃</button>
+  <button data-t="cyber">赛博霓虹</button>
+  <button data-t="kawaii">甜系可爱</button>
+  <button data-t="glass" class="active">玻璃拟态</button>
+  <button data-t="mecha">机械机甲</button>
+  <button data-t="mecha" data-v="dark">机甲·暗</button>
+  <button data-t="guochao">国潮复古</button>
+</div>
+
+<div id="pv-stage">
+
+  <!-- 左列：主窗口 + 我的页 -->
+  <div class="pv-col">
+    <div class="pv-window">
+      <div class="titlebar">
+        <div class="brand">微忆 WeMemo</div>
+        <div class="win-ctrls">
+          <div class="btn"><svg viewBox="0 0 12 12" width="12" height="12"><path d="M1 6h10" stroke="currentColor" stroke-width="1.2"/></svg></div>
+          <div class="btn"><svg viewBox="0 0 12 12" width="12" height="12"><rect x="1.5" y="1.5" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></div>
+          <div class="btn close"><svg viewBox="0 0 12 12" width="12" height="12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+        </div>
+      </div>
+      <div class="pv-row">
+      <div class="tabbar">
+        <div class="tab active" title="聊天"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+        <div class="tab" title="通讯录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14a5 5 0 0 1 4.5 6"/></svg></div>
+        <div class="tab" title="发现"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13.8 13.8 8.5 15.5 10.2 10.2z"/></svg></div>
+        <div class="tab" title="我"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.5 3.6-6 8-6s8 2.5 8 6"/></svg></div>
+      </div>
+      <div class="sidebar">
+        <div class="sidebar-top">
+          <div class="avatar">忆</div>
+          <div class="search-box">
+            <svg viewBox="0 0 20 20" width="14" height="14"><circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M13 13l4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <input placeholder="搜索" />
+          </div>
+        </div>
+        <div class="sidebar-title">最近会话</div>
+        <div class="session-list" style="flex:1;overflow-y:auto">
+          <div class="session active">
+            <div class="ava"><span class="emoji">🌙</span></div>
+            <div class="info">
+              <div class="row1"><span class="name">星野记忆</span><span class="time">21:03</span></div>
+              <div class="summary">今晚的月色很美，适合聊点轻快的</div>
+            </div>
+            <span class="unread">3</span>
+          </div>
+          <div class="session">
+            <div class="ava"><span class="emoji">🚀</span></div>
+            <div class="info">
+              <div class="row1"><span class="name">产品攻坚组</span><span class="time">20:41</span></div>
+              <div class="summary">[文件] 主题引擎 v2 设计文档.pdf</div>
+            </div>
+          </div>
+          <div class="session">
+            <div class="ava"><span class="emoji">🍵</span></div>
+            <div class="info">
+              <div class="row1"><span class="name">阿澈</span><span class="time">19:27</span></div>
+              <div class="summary">收到，明天上午一起过一遍细节</div>
+            </div>
+          </div>
+          <div class="session">
+            <div class="ava"><span class="emoji">📊</span></div>
+            <div class="info">
+              <div class="row1"><span class="name">数据统计助手</span><span class="time">18:02</span></div>
+              <div class="summary">本周消息量较上周 +12.4%</div>
+            </div>
+          </div>
+          <div class="session">
+            <div class="ava"><span class="emoji">🎧</span></div>
+            <div class="info">
+              <div class="row1"><span class="name">夜航电台</span><span class="time">昨天</span></div>
+              <div class="summary">[语音] 0:42</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="chat">
+        <div class="chat-head">
+          <div class="name">星野记忆</div>
+          <div class="meta">3 位成员 · 最后消息 21:03</div>
+          <div class="head-actions" style="display:flex;margin-left:auto">
+            <div class="head-btn" title="在本会话中查找（Ctrl+F）"><svg viewBox="0 0 20 20" width="16" height="16"><circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M13 13l4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>查找</span></div>
+            <div class="head-btn" title="加载全部消息"><svg viewBox="0 0 20 20" width="16" height="16"><path d="M10 3v10M6 9l4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>全部</span></div>
+            <div class="head-btn" title="导出本会话聊天记录"><svg viewBox="0 0 20 20" width="16" height="16"><path d="M10 13V3M6 7l4-4 4 4M3 15v2h14v-2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>导出</span></div>
+          </div>
+        </div>
+        <div class="chat-body">
+          <div class="chat-messages" style="display:flex;flex-direction:column;gap:18px;width:100%">
+            <div class="msg you">
+              <div class="mava"><span class="emoji">🌙</span></div>
+              <div class="bubble">晚上好呀，今天过得怎么样？我把上次聊到的旅行清单整理好了，就在下面👇</div>
+            </div>
+            <div class="msg me">
+              <div class="bubble">太好了！我一直惦记着那个海边小镇，终于可以提上日程了</div>
+            </div>
+            <div class="msg you">
+              <div class="mava"><span class="emoji">🌙</span></div>
+              <div class="bubble">嗯嗯，攻略、住宿和车票我都查好了，你看看这份卡片：</div>
+            </div>
+            <div class="msg me">
+              <div class="bubble">
+                <div class="pay-card transfer"><span class="pay-ico">🧧</span><div class="pay-body"><span class="pay-amount">￥520.00</span><span class="pay-sub">转账 · 备注：旅行基金</span></div></div>
+              </div>
+            </div>
+            <div class="msg you">
+              <div class="mava"><span class="emoji">🌙</span></div>
+              <div class="bubble">收到啦 😊 那就说定了，下个周末出发！</div>
+            </div>
+            <div class="msg system"><div class="bubble">—— 以上是历史消息 ——</div></div>
+          </div>
+        </div>
+      </div>
+      </div><!-- /pv-row -->
+    </div>
+
+    <!-- 我的页：统计卡 / 面板 / 个人卡（验证切角 + 角括号 + 玻璃） -->
+    <div class="pv-me">
+      <div class="me-card full">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="avatar" style="width:46px;height:46px;font-size:20px">忆</div>
+          <div>
+            <div style="font-size:15px;font-weight:600">微忆用户</div>
+            <div style="font-size:12px;color:var(--wx-text-3)">聊天记忆已归档 · 8 个会话</div>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">12,847</div>
+        <div class="stat-sub">累计消息数</div>
+        <div class="bar-track" style="margin-top:10px;height:6px;border-radius:3px;background:var(--wx-track)"><div class="bar-fill" style="width:72%;height:100%;border-radius:3px"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">3.2 GB</div>
+        <div class="stat-sub">归档体积</div>
+        <div class="ratio" style="margin-top:10px;height:6px;border-radius:3px;background:var(--wx-track);overflow:hidden"><div class="ratio-sent" style="width:58%;height:100%;background:var(--wx-green)"></div></div>
+      </div>
+      <div class="panel full">
+        <div class="panel-title">会话活跃度 <span class="panel-note" style="font-size:11px;color:var(--wx-text-3)">近 7 天</span></div>
+        <div class="panel-body" style="display:flex;align-items:flex-end;gap:10px;height:90px">
+          <div class="col-bar" style="height:35%;width:18px"></div>
+          <div class="col-bar" style="height:52%;width:18px"></div>
+          <div class="col-bar" style="height:40%;width:18px"></div>
+          <div class="col-bar" style="height:78%;width:18px"></div>
+          <div class="col-bar" style="height:60%;width:18px"></div>
+          <div class="col-bar" style="height:88%;width:18px"></div>
+          <div class="col-bar" style="height:70%;width:18px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右列：启动页 + 弹窗 + 按钮 -->
+  <div class="pv-col">
+    <div class="pv-overlay">
+      <div class="boot" style="opacity:1">
+        <div class="logo"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.6C7.3 3.6 3.5 7.1 3.5 11.4c0 2.4 1.3 4.6 3.4 6-.3 1.7-1.4 3.2-3 4.5 2.6-.2 4.6-1.2 6-2.7.6.1 1.2.2 1.9.2 4.7 0 8.5-3.5 8.5-7.8s-3.8-7.8-8.5-7.8z"/><path d="M15.9 4.7l1.2 2.9 2.9 1.2-2.9 1.2-1.2 2.9-1.2-2.9-2.9-1.2 2.9-1.2z"/><path d="M20.9 2.4l.75 1.8 1.8.75-1.8.75-.75 1.8-.75-1.8-1.8-.75 1.8-.75z"/><circle cx="18.8" cy="19.6" r="0.9" fill="currentColor" stroke="none"/></svg></div>
+        <div class="title">微忆 WeMemo</div>
+        <div class="sub">正在加载你的聊天记忆…</div>
+      </div>
+    </div>
+
+    <div class="pv-window" style="height:auto;flex:1">
+      <div class="modal-card" style="width:100%;max-width:none;margin:14px">
+        <div class="modal-title">导出聊天记录</div>
+        <div class="modal-sub">选择格式与范围，开始导出</div>
+        <div class="modal-field">
+          <div class="modal-label" style="font-size:12px;color:var(--wx-text-3);margin-bottom:8px">格式</div>
+          <div class="seg" style="display:flex;gap:8px">
+            <div class="seg-item active" style="padding:8px 10px;border:1px solid var(--wx-line);border-radius:6px;font-size:12px">网页 HTML</div>
+            <div class="seg-item" style="padding:8px 10px;border:1px solid var(--wx-line);border-radius:6px;font-size:12px">文本 TXT</div>
+            <div class="seg-item" style="padding:8px 10px;border:1px solid var(--wx-line);border-radius:6px;font-size:12px">数据 JSON</div>
+          </div>
+        </div>
+        <div class="modal-actions" style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px">
+          <button class="btn-ghost">取消</button>
+          <button class="btn-primary">选择目录并导出</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="btn-primary">主按钮</button>
+      <button class="btn-ghost">次按钮</button>
+      <span class="chip" style="padding:4px 10px;border:1px solid var(--wx-line);border-radius:4px;font-size:12px">标签</span>
+      <span class="chip" style="padding:4px 10px;border:1px solid var(--wx-line);border-radius:4px;font-size:12px;background:var(--wx-chipbg)">选中标签</span>
+      <span class="sync-state fresh" style="padding:3px 8px;border-radius:4px;font-size:11px">● 已同步</span>
+    </div>
+    <div class="pv-tip">顶部按钮可实时切换主题（机甲·暗 为亮暗变体演示）</div>
+  </div>
+
+</div>
+
+<script>
+  (function () {
+    var bar = document.getElementById('pv-bar');
+    var root = document.documentElement;
+    function paint() {
+      var t = root.getAttribute('data-theme') || 'light';
+      var v = root.getAttribute('data-variant') || '';
+      var btns = bar.querySelectorAll('button');
+      for (var i = 0; i < btns.length; i++) {
+        var b = btns[i];
+        b.classList.toggle('active', b.getAttribute('data-t') === t && (b.getAttribute('data-v') || '') === v);
+      }
+    }
+    bar.addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b) return;
+      var t = b.getAttribute('data-t');
+      var v = b.getAttribute('data-v') || '';
+      if (t === 'light' || t === 'liquid' || t === 'cyber' || t === 'kawaii' || t === 'guochao') v = '';
+      root.setAttribute('data-theme', t);
+      if (v) root.setAttribute('data-variant', v); else root.removeAttribute('data-variant');
+      paint();
+    });
+    paint();
+  })();
+</script>
+</body>
+</html>
