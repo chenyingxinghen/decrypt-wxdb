@@ -1,0 +1,41 @@
+# ---- 生成产物（截图/中间文件，约 1.5G）----
+deliverables/
+
+# ---- 嵌套独立项目 wememo_app（含 node_modules/dist/release/keys，约 1.2G）----
+wememo_app/
+
+# ---- 敏感密钥与数据库文件（绝不入库）----
+key_info.plain
+weflow_key.txt
+aes_keys_startup.txt
+keyinfo_backup/
+06_inject/master_key.txt
+
+# ---- 归档中的密钥材料与数据库文件 ----
+archive/all_keys.txt
+archive/captured_keys.txt
+archive/key.txt
+archive/latest_keyinfo.json
+archive/derived_keys.json
+archive/session_plain.db
+archive/*.db-shm
+archive/*.db-wal
+
+# ---- Python ----
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# ---- 系统/编辑器 ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local notes and sensitive research material
+.workbuddy/
+archive/
+
